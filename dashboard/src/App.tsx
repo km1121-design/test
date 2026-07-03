@@ -7,6 +7,7 @@ import { YamatoTab } from './components/tabs/YamatoTab';
 import { EnterpriseTab } from './components/tabs/EnterpriseTab';
 import { FrictionLogTab } from './components/tabs/FrictionLogTab';
 import { ToastProvider } from './components/ToastProvider';
+import { DashboardDataProvider } from './context/DashboardDataContext';
 import { useSimulator } from './hooks/useSimulator';
 
 function DashboardBody() {
@@ -38,7 +39,9 @@ function DashboardBody() {
 function App() {
   return (
     <ToastProvider>
-      <DashboardBody />
+      <DashboardDataProvider>
+        <DashboardBody />
+      </DashboardDataProvider>
     </ToastProvider>
   );
 }

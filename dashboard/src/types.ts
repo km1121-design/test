@@ -16,7 +16,8 @@ export type Segment = 'ヤマト' | '企業配' | '全体';
 export interface Driver {
   id: string;
   name: string;
-  role: DriverRole;
+  /** 固定ランクに満たない場合（実データ連携など）は任意の文字列を許容 */
+  role: DriverRole | string;
   /** ドライバー受取単価（円/個）。会社受取単価との差額が粗利 */
   unitPrice: number;
   area: string;

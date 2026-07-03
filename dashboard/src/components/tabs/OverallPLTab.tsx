@@ -1,7 +1,7 @@
 import { AlertTriangle, TrendingDown, Truck, Users2 } from 'lucide-react';
 import { Card, CardHeader } from '../ui/Card';
 import { StatTile } from '../ui/StatTile';
-import { overallActuals, yamatoActuals } from '../../data/aggregates';
+import { useDashboardData } from '../../context/DashboardDataContext';
 import { VEHICLE_EXPENSE_DETAIL, VEHICLE_EXPENSE_TOTAL } from '../../data/vehicleExpense';
 import { ADMIN_BASE_COST } from '../../data/constants';
 import { formatYen, formatPercent } from '../../utils/format';
@@ -16,6 +16,7 @@ const CATEGORY_TONE: Record<ExpenseCategory, string> = {
 };
 
 export function OverallPLTab() {
+  const { overallActuals, yamatoActuals } = useDashboardData();
   const marginPerPackageMin = 7;
   const marginPerPackageMax = 12;
 

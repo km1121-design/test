@@ -2,12 +2,14 @@ import { Award, Truck, UserPlus } from 'lucide-react';
 import { Card, CardHeader } from '../ui/Card';
 import { StatTile } from '../ui/StatTile';
 import { Badge } from '../ui/Badge';
-import { yamatoDrivers, yamatoActuals } from '../../data/aggregates';
-import { YAMATO_CURRENT_AVG_PACKAGES, YAMATO_STAFF_TARGET_PACKAGES, YAMATO_TARGET_DRIVER_COUNT, YAMATO_CURRENT_DRIVER_COUNT } from '../../data/constants';
+import { useDashboardData } from '../../context/DashboardDataContext';
+import { YAMATO_CURRENT_AVG_PACKAGES, YAMATO_STAFF_TARGET_PACKAGES, YAMATO_TARGET_DRIVER_COUNT } from '../../data/constants';
 import { formatYen } from '../../utils/format';
 
 export function YamatoTab() {
-  const additionalNeeded = Math.max(0, YAMATO_TARGET_DRIVER_COUNT - YAMATO_CURRENT_DRIVER_COUNT);
+  const { yamatoDrivers, yamatoActuals, isYamatoLive } = useDashboardData();
+  const currentDriverCount = yamatoDrivers.length;
+  const additionalNeeded = Math.max(0, YAMATO_TARGET_DRIVER_COUNT - currentDriverCount);
   const sorted = [...yamatoDrivers].sort((a, b) => (b.actualSales - b.actualOutsource - b.actualExpense) - (a.actualSales - a.actualOutsource - a.actualExpense));
 
   return (
@@ -17,7 +19,11 @@ export function YamatoTab() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatTile label="売上高（半月実績）" value={formatYen(yamatoActuals.sales)} />
           <StatTile label="部門粗利（半月実績）" value={formatYen(yamatoActuals.margin)} tone={yamatoActuals.margin >= 0 ? 'good' : 'critical'} />
-          <StatTile label="現在人員" value={`${YAMATO_CURRENT_DRIVER_COUNT}名`} hint={`目標 ${YAMATO_TARGET_DRIVER_COUNT}名`} />
+          <StatTile
+            label="現在人員"
+            value={`${currentDriverCount}名`}
+            hint={isYamatoLive ? `実データ連携中・目標 ${YAMATO_TARGET_DRIVER_COUNT}名` : `目標 ${YAMATO_TARGET_DRIVER_COUNT}名`}
+          />
         </div>
       </Card>
 
@@ -32,7 +38,7 @@ export function YamatoTab() {
         <div className="mt-3 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-black/20 px-3 py-2.5">
           <UserPlus className="h-4 w-4 shrink-0 text-amber-400" />
           <span className="text-sm text-white">
-            目標 {YAMATO_TARGET_DRIVER_COUNT}名 ／ 現状 {YAMATO_CURRENT_DRIVER_COUNT}名 ⇒
+            目標 {YAMATO_TARGET_DRIVER_COUNT}名 ／ 現状 {currentDriverCount}名 ⇒
             <strong className="ml-1 text-amber-400">あと{additionalNeeded}名の増員</strong>が最優先アクション
           </span>
         </div>
