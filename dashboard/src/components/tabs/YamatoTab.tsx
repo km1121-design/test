@@ -1,4 +1,4 @@
-import { Award, Truck, UserPlus } from 'lucide-react';
+import { Award, Truck, UserPlus, Info } from 'lucide-react';
 import { Card, CardHeader } from '../ui/Card';
 import { StatTile } from '../ui/StatTile';
 import { Badge } from '../ui/Badge';
@@ -43,6 +43,16 @@ export function YamatoTab() {
           </span>
         </div>
       </Card>
+
+      {isYamatoLive && (
+        <div className="flex items-start gap-2 rounded-lg border border-sky-500/30 bg-sky-500/[0.06] px-3 py-2.5 text-xs text-[var(--text-secondary)]">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
+          <span>
+            売上はコース別の実単価で計算していますが、<strong className="text-white">外注費（ドライバーへの卸値）は暫定の一律単価による概算値</strong>です。
+            実際のドライバー別単価が判明次第、正確な値に更新されます。
+          </span>
+        </div>
+      )}
 
       <Card>
         <CardHeader title="ドライバー個別貢献度一覧" subtitle="会社への利益貢献額（マージン）が高い順" />

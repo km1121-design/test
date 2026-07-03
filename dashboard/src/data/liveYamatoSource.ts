@@ -1,5 +1,9 @@
-import { priceForCourse, NEKOPOS_PRICE } from './courseRates';
-import { COMPANY_RECEIVE_PRICE_PLACEHOLDER } from './liveConfig';
+import {
+  companyReceivePriceForCourse,
+  NEKOPOS_COMPANY_RECEIVE_PRICE,
+  DRIVER_PAYOUT_PLACEHOLDER,
+  NEKOPOS_DRIVER_PAYOUT_PLACEHOLDER,
+} from './courseRates';
 import type { Driver } from '../types';
 
 export interface RawCourseAggregate {
@@ -31,15 +35,19 @@ interface Accumulator {
 
 /**
  * Apps Script APIが返す「氏名×コース」の生集計を、ダッシュボードが表示する
- * Driver[] 形状に変換する。単価判定（コース別）はここで一括して行う。
+ * Driver[] 形状に変換する。
+ *
+ * 売上側（actualSales）はコース別の「会社受取単価」が判明しているため正確に計算できる。
+ * 外注費側（actualOutsource）はドライバーごとの卸値がまだ未確定のため、暫定の
+ * 一律単価（DRIVER_PAYOUT_PLACEHOLDER）で計算した概算値。実データが判明次第、
+ * courseRates.ts の値を更新すること。
  */
 export function transformToDrivers(response: LiveYamatoResponse): Driver[] {
   const byName = new Map<string, Accumulator>();
 
   response.rows.forEach((row, index) => {
-    const driverPrice = priceForCourse(row.course);
-    const outsource = row.totalCompleted * driverPrice + row.totalNekopos * NEKOPOS_PRICE;
-    const sales = row.totalCompleted * COMPANY_RECEIVE_PRICE_PLACEHOLDER;
+    const sales = row.totalCompleted * companyReceivePriceForCourse(row.course) + row.totalNekopos * NEKOPOS_COMPANY_RECEIVE_PRICE;
+    const outsource = row.totalCompleted * DRIVER_PAYOUT_PLACEHOLDER + row.totalNekopos * NEKOPOS_DRIVER_PAYOUT_PLACEHOLDER;
 
     const existing = byName.get(row.name);
     if (existing) {
