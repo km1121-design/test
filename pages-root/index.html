@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>km1121-design/test — ツール一覧</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0d0d0d;
+        color: #ffffff;
+        font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+        padding: 24px;
+      }
+      main {
+        width: 100%;
+        max-width: 720px;
+      }
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      p.lead {
+        color: #c3c2b7;
+        margin: 0 0 28px;
+        font-size: 0.9rem;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+      }
+      a.card {
+        display: block;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #1a1a19;
+        border-radius: 12px;
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s ease, transform 0.15s ease;
+      }
+      a.card:hover {
+        border-color: rgba(251, 191, 36, 0.5);
+        transform: translateY(-2px);
+      }
+      .card h2 {
+        margin: 0 0 6px;
+        font-size: 1rem;
+        color: #fbbf24;
+      }
+      .card p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #c3c2b7;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>km1121-design/test</h1>
+      <p class="lead">社内向けツール一覧</p>
+      <div class="cards">
+        <a class="card" href="./dashboard/">
+          <h2>Gooner運送事業部 経営分析ダッシュボード</h2>
+          <p>What-Ifシミュレーターによる黒字化分析、全体PL／ヤマト宅配／企業配／現場課題の可視化。</p>
+        </a>
+        <a class="card" href="./invoice-tool/">
+          <h2>請求書作成ツール</h2>
+          <p>ブラウザだけで動作する請求書作成・PDF出力ツール。</p>
+        </a>
+      </div>
+    </main>
+  </body>
+</html>
