@@ -1,6 +1,19 @@
 # test
 テスト環境
 
+## Gooner運送事業部 経営分析ダッシュボード
+
+`dashboard/` に、Gooner運送事業部の黒字化を支援する経営分析・What-Ifシミュレーション
+ダッシュボード（React + TypeScript + Vite + Tailwind CSS）があります。要件定義書は
+`docs/gooner-dashboard-requirements.md`、セットアップ方法は `dashboard/README.md` を
+参照してください。
+
+```bash
+cd dashboard
+npm install
+npm run dev
+```
+
 ## 請求書作成ツール
 
 `invoice-tool/` にブラウザだけで動作する請求書作成ツールがあります。サーバーやビルド不要で、`invoice-tool/index.html` を開くだけで使えます。

@@ -1,9 +1,13 @@
-name: Deploy Invoice Tool to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
-    paths: ["invoice-tool/**", ".github/workflows/deploy-pages.yml"]
+    paths:
+      - "invoice-tool/**"
+      - "dashboard/**"
+      - "pages-root/**"
+      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,14 +28,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dashboard dependencies
+        working-directory: dashboard
+        run: npm ci
+
+      - name: Build dashboard
+        working-directory: dashboard
+        run: npm run build
+
+      - name: Assemble Pages site
+        run: |
+          mkdir -p _site
+          cp -r pages-root/. _site/
+          mkdir -p _site/invoice-tool
+          cp -r invoice-tool/. _site/invoice-tool/
+          mkdir -p _site/dashboard
+          cp -r dashboard/dist/. _site/dashboard/
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: invoice-tool
+          path: _site
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
