@@ -1,6 +1,23 @@
 # test
 テスト環境
 
+## BAR 業務日報・売上管理システム
+
+`bar-dashboard/` に、BAR事業（1部・2部）の日報（売上・経費・勤怠）入力から、
+インセンティブ計算・利益の見える化までを行うダッシュボード（React + TypeScript +
+Vite + Tailwind CSS）があります。要件定義書は `docs/bar-dashboard-requirements.md`
+を参照してください。
+
+```bash
+cd bar-dashboard
+npm install
+npm run dev
+```
+
+LINE Bot・サーバー側DB連携は未実装で、日報入力フォームでの送信を模した
+フロントエンド完結の実装（データは `localStorage` に保存）です。詳細は要件定義書の
+「2.1 本リポジトリでの実装範囲」を参照してください。
+
 ## Gooner運送事業部 経営分析ダッシュボード
 
 `dashboard/` に、Gooner運送事業部の黒字化を支援する経営分析・What-Ifシミュレーション
