@@ -14,9 +14,28 @@ npm install
 npm run dev
 ```
 
-LINE Bot・サーバー側DB連携は未実装で、日報入力フォームでの送信を模した
-フロントエンド完結の実装（データは `localStorage` に保存）です。詳細は要件定義書の
-「2.1 本リポジトリでの実装範囲」を参照してください。
+`bar-dashboard/` 単体は日報入力フォームでの送信を模したフロントエンド完結の実装
+（データは `localStorage` に保存）です。実際にLINEで日報をやり取いするバック
+エンドは `line-bot/` に実装しています（下記）。
+
+## BAR業務日報 LINE Bot
+
+`line-bot/` に、LINEで送信された日報を受け取り、SQLiteへの保存・★自動計算
+（インセンティブ・当月累計・利益など）・「報告用」テキストの生成/返信/グループ
+転送までを行うNode.js（Express + TypeScript）製のBotサーバーがあります。
+セットアップ・LINE Developersでのチャネル作成手順・メッセージフォーマットは
+`line-bot/README.md` を参照してください。
+
+```bash
+cd line-bot
+npm install
+cp .env.example .env   # LINE_CHANNEL_ACCESS_TOKEN / LINE_CHANNEL_SECRET を設定
+npm run seed
+npm run dev
+```
+
+LINEチャネルを用意する前でも `npm run cli` でパーサー・計算ロジックをローカル
+確認できます。
 
 ## Gooner運送事業部 経営分析ダッシュボード
 
