@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>請求書作成ツール</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <h1>請求書作成ツール</h1>
+  <div class="toolbar-actions">
+    <button id="btnNew" title="入力内容をすべてクリアします">新規作成</button>
+    <button id="btnExport">JSON書き出し</button>
+    <button id="btnImportTrigger">JSON読み込み</button>
+    <input type="file" id="btnImport" accept="application/json" hidden>
+    <button id="btnPrint" class="primary">印刷 / PDF保存</button>
+  </div>
+</div>
+<p class="autosave-note no-print">入力内容はブラウザに自動保存されます(このデバイス限定)。</p>
+
+<main id="invoice" class="sheet">
+
+  <header class="invoice-header">
+    <h2 class="invoice-title">請求書</h2>
+    <div class="invoice-meta">
+      <div class="meta-row">
+        <label>請求書番号</label>
+        <input type="text" id="invoiceNo" placeholder="INV-0001">
+      </div>
+      <div class="meta-row">
+        <label>発行日</label>
+        <input type="date" id="issueDate">
+      </div>
+      <div class="meta-row">
+        <label>支払期限</label>
+        <input type="date" id="dueDate">
+      </div>
+    </div>
+  </header>
+
+  <section class="parties">
+    <div class="party client">
+      <div class="party-name-row">
+        <input type="text" id="clientName" class="party-name-input" placeholder="株式会社サンプル">
+        <span>御中</span>
+      </div>
+      <textarea id="clientAddress" placeholder="住所・部署・担当者名など"></textarea>
+    </div>
+
+    <div class="party issuer">
+      <textarea id="issuerBlock" placeholder="発行者情報&#10;会社名&#10;住所&#10;電話番号&#10;メールアドレス&#10;登録番号（インボイス制度）: T1234567890123"></textarea>
+    </div>
+  </section>
+
+  <section class="subject-row">
+    <label>件名</label>
+    <input type="text" id="subject" placeholder="〇〇に関する請求">
+  </section>
+
+  <section class="total-highlight">
+    <span>ご請求金額</span>
+    <span id="grandTotalDisplay" class="grand-total">¥0</span>
+  </section>
+
+  <section class="items-section">
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th class="col-desc">品目・内容</th>
+          <th class="col-qty">数量</th>
+          <th class="col-unit">単位</th>
+          <th class="col-price">単価</th>
+          <th class="col-tax">税率</th>
+          <th class="col-amount">金額</th>
+          <th class="col-del no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody">
+      </tbody>
+    </table>
+    <button id="btnAddRow" class="no-print">＋ 行を追加</button>
+  </section>
+
+  <section class="summary">
+    <table class="summary-table">
+      <tr>
+        <td>小計</td>
+        <td id="subtotalDisplay">¥0</td>
+      </tr>
+      <tbody id="taxBreakdownBody"></tbody>
+      <tr class="grand">
+        <td>合計</td>
+        <td id="totalDisplay">¥0</td>
+      </tr>
+    </table>
+  </section>
+
+  <section class="bank-section">
+    <h3>お振込先</h3>
+    <textarea id="bankInfo" placeholder="銀行名・支店名・預金種目・口座番号・口座名義"></textarea>
+  </section>
+
+  <section class="notes-section">
+    <h3>備考</h3>
+    <textarea id="notes" placeholder="振込手数料はご負担ください、など"></textarea>
+  </section>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
