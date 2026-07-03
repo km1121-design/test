@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シフト入力 | 請求書作成アプリ</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>請求書作成アプリ</h1>
+  <nav class="app-nav">
+    <a href="index.html">ホーム</a>
+    <a href="companies.html">自社情報</a>
+    <a href="clients.html">取引先</a>
+    <a href="cases.html">案件</a>
+    <a href="shifts.html" class="active">シフト入力</a>
+    <a href="invoices.html">請求書</a>
+  </nav>
+</header>
+
+<main class="app-main">
+  <h2>シフト入力</h2>
+  <p class="hint">案件ごとに勤務日を記録します。同じ案件・同じ日付を再登録すると数量が上書きされます。</p>
+  <div id="errorBanner" class="error-banner"></div>
+
+  <section class="panel">
+    <h3>手入力で追加</h3>
+    <form id="shiftForm">
+      <div class="form-grid">
+        <div class="field">
+          <label>案件 *</label>
+          <select id="case_id" required></select>
+        </div>
+        <div class="field">
+          <label>日付 *</label>
+          <input type="date" id="work_date" required>
+        </div>
+        <div class="field">
+          <label>数量(日数)</label>
+          <input type="number" id="quantity" value="1" step="0.5" min="0">
+        </div>
+        <div class="field">
+          <label>メモ</label>
+          <input type="text" id="note">
+        </div>
+      </div>
+      <div class="toolbar-row" style="margin-top: 12px;">
+        <button type="submit" class="primary">追加</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h3>CSV取込</h3>
+    <p class="hint">
+      ヘッダー行付きCSV(1列目: date=日付 YYYY-MM-DD、2列目: case=案件名、3列目: quantity=数量(省略可、既定1)。
+      案件名が複数の取引先で重複する場合は client 列(取引先名)も追加してください。
+      Excelファイルの場合は「CSV形式で保存」してから取り込んでください。
+    </p>
+    <textarea id="csvInput" rows="5" placeholder="date,case,quantity&#10;2026-07-01,7月常駐案件,1&#10;2026-07-02,7月常駐案件,1"></textarea>
+    <div class="toolbar-row" style="margin-top: 12px;">
+      <div>
+        <input type="file" id="csvFile" accept=".csv,text/csv">
+        <button type="button" id="importBtn" class="primary">取込実行</button>
+      </div>
+    </div>
+    <div id="importResult" class="hint"></div>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar-row">
+      <h3 style="margin:0;">シフト一覧</h3>
+      <select id="filterCase">
+        <option value="">すべての案件</option>
+      </select>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>日付</th>
+          <th>取引先</th>
+          <th>案件</th>
+          <th>数量</th>
+          <th>メモ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/shifts.js"></script>
+</body>
+</html>

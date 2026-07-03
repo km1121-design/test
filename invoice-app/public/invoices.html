@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>請求書一覧 | 請求書作成アプリ</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>請求書作成アプリ</h1>
+  <nav class="app-nav">
+    <a href="index.html">ホーム</a>
+    <a href="companies.html">自社情報</a>
+    <a href="clients.html">取引先</a>
+    <a href="cases.html">案件</a>
+    <a href="shifts.html">シフト入力</a>
+    <a href="invoices.html" class="active">請求書</a>
+  </nav>
+</header>
+
+<main class="app-main">
+  <div class="toolbar-row">
+    <h2 style="margin:0;">請求書一覧</h2>
+    <a href="invoice.html"><button type="button" class="primary">＋ 新規請求書を作成</button></a>
+  </div>
+  <div id="errorBanner" class="error-banner"></div>
+
+  <section class="panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>請求書番号</th>
+          <th>発行日</th>
+          <th>発行元</th>
+          <th>取引先</th>
+          <th>金額</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/invoices.js"></script>
+</body>
+</html>

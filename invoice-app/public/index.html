@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>請求書作成アプリ</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>請求書作成アプリ</h1>
+  <nav class="app-nav">
+    <a href="index.html" class="active">ホーム</a>
+    <a href="companies.html">自社情報</a>
+    <a href="clients.html">取引先</a>
+    <a href="cases.html">案件</a>
+    <a href="shifts.html">シフト入力</a>
+    <a href="invoices.html">請求書</a>
+  </nav>
+</header>
+
+<main class="app-main">
+  <h2>ようこそ</h2>
+  <p class="hint">はじめての場合は上から順に登録すると進めやすいです。</p>
+
+  <section class="panel">
+    <ol>
+      <li><a href="companies.html">自社情報</a> ― 請求書の発行元(複数登録・切り替え可)を登録します。</li>
+      <li><a href="clients.html">取引先</a> ― 請求書の宛先を登録します。</li>
+      <li><a href="cases.html">案件</a> ― 取引先ごとの案件と単価(日給)を登録します。</li>
+      <li><a href="shifts.html">シフト入力</a> ― 案件ごとの勤務日を記録します(手入力・CSV取込に対応)。</li>
+      <li><a href="invoices.html">請求書</a> ― 自社・取引先・期間を選んでシフトから請求書を自動生成し、印刷/PDF保存します。</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

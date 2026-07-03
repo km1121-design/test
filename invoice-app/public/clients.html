@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>取引先管理 | 請求書作成アプリ</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>請求書作成アプリ</h1>
+  <nav class="app-nav">
+    <a href="index.html">ホーム</a>
+    <a href="companies.html">自社情報</a>
+    <a href="clients.html" class="active">取引先</a>
+    <a href="cases.html">案件</a>
+    <a href="shifts.html">シフト入力</a>
+    <a href="invoices.html">請求書</a>
+  </nav>
+</header>
+
+<main class="app-main">
+  <h2>取引先</h2>
+  <p class="hint">請求書の宛先となる取引先(クライアント)を複数登録できます。</p>
+  <div id="errorBanner" class="error-banner"></div>
+
+  <section class="panel">
+    <h3 id="formTitle">新規登録</h3>
+    <form id="clientForm">
+      <input type="hidden" id="id">
+      <div class="form-grid">
+        <div class="field span-2">
+          <label>取引先名 *</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="field">
+          <label>郵便番号</label>
+          <input type="text" id="postal_code">
+        </div>
+        <div class="field">
+          <label>担当者名</label>
+          <input type="text" id="contact_name">
+        </div>
+        <div class="field span-2">
+          <label>住所</label>
+          <input type="text" id="address">
+        </div>
+        <div class="field span-2">
+          <label>備考</label>
+          <textarea id="notes"></textarea>
+        </div>
+      </div>
+      <div class="toolbar-row" style="margin-top: 12px;">
+        <div>
+          <button type="submit" class="primary">保存</button>
+          <button type="button" id="cancelEdit" style="display:none;">編集をキャンセル</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>取引先名</th>
+          <th>住所</th>
+          <th>担当者</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/clients.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自社情報管理 | 請求書作成アプリ</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>請求書作成アプリ</h1>
+  <nav class="app-nav">
+    <a href="index.html">ホーム</a>
+    <a href="companies.html" class="active">自社情報</a>
+    <a href="clients.html">取引先</a>
+    <a href="cases.html">案件</a>
+    <a href="shifts.html">シフト入力</a>
+    <a href="invoices.html">請求書</a>
+  </nav>
+</header>
+
+<main class="app-main">
+  <h2>自社情報</h2>
+  <p class="hint">請求書の発行元となる自社情報を複数登録できます。請求書作成時に発行元を選択します。</p>
+  <div id="errorBanner" class="error-banner"></div>
+
+  <section class="panel">
+    <h3 id="formTitle">新規登録</h3>
+    <form id="companyForm">
+      <input type="hidden" id="id">
+      <div class="form-grid">
+        <div class="field span-2">
+          <label>会社名 *</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="field">
+          <label>郵便番号</label>
+          <input type="text" id="postal_code" placeholder="150-0000">
+        </div>
+        <div class="field">
+          <label>電話番号</label>
+          <input type="text" id="phone">
+        </div>
+        <div class="field span-2">
+          <label>住所</label>
+          <input type="text" id="address">
+        </div>
+        <div class="field">
+          <label>メールアドレス</label>
+          <input type="email" id="email">
+        </div>
+        <div class="field">
+          <label>登録番号(インボイス制度)</label>
+          <input type="text" id="registration_no" placeholder="T1234567890123">
+        </div>
+        <div class="field span-2">
+          <label>振込先(口座情報)</label>
+          <textarea id="bank_info"></textarea>
+        </div>
+        <div class="field span-2">
+          <label>備考</label>
+          <textarea id="notes"></textarea>
+        </div>
+      </div>
+      <div class="toolbar-row" style="margin-top: 12px;">
+        <div>
+          <button type="submit" class="primary">保存</button>
+          <button type="button" id="cancelEdit" style="display:none;">編集をキャンセル</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>会社名</th>
+          <th>住所</th>
+          <th>電話番号</th>
+          <th>登録番号</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/companies.js"></script>
+</body>
+</html>

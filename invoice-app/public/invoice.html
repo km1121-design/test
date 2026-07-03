@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>請求書作成 | 請求書作成アプリ</title>
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/invoice.css">
+</head>
+<body>
+<header class="app-header no-print">
+  <h1>請求書作成アプリ</h1>
+  <nav class="app-nav">
+    <a href="index.html">ホーム</a>
+    <a href="companies.html">自社情報</a>
+    <a href="clients.html">取引先</a>
+    <a href="cases.html">案件</a>
+    <a href="shifts.html">シフト入力</a>
+    <a href="invoices.html" class="active">請求書</a>
+  </nav>
+</header>
+
+<div class="gen-toolbar no-print">
+  <div id="errorBanner" class="error-banner" style="max-width:1000px; margin:0 auto 12px;"></div>
+  <div class="form-grid">
+    <div class="field">
+      <label>発行元(自社)</label>
+      <select id="company_id"></select>
+    </div>
+    <div class="field">
+      <label>取引先</label>
+      <select id="client_id"></select>
+    </div>
+    <div class="field">
+      <label>対象期間(開始)</label>
+      <input type="date" id="period_start">
+    </div>
+    <div class="field">
+      <label>対象期間(終了)</label>
+      <input type="date" id="period_end">
+    </div>
+  </div>
+  <div class="toolbar-row" style="max-width:1000px; margin:12px auto 0;">
+    <div>
+      <button type="button" id="btnGenerate" class="primary">シフトから明細を自動生成</button>
+      <button type="button" id="btnAddRow">＋ 明細行を追加</button>
+    </div>
+    <div>
+      <span id="saveStatus" class="save-status">未保存</span>
+      <button type="button" id="btnSave" class="primary">保存</button>
+      <button type="button" id="btnPrint">印刷 / PDF保存</button>
+    </div>
+  </div>
+</div>
+
+<main id="invoice" class="sheet">
+  <header class="invoice-header">
+    <h2 class="invoice-title">請求書</h2>
+    <div class="invoice-meta">
+      <div class="meta-row">
+        <label>請求書番号</label>
+        <input type="text" id="invoice_no" placeholder="INV-0001">
+      </div>
+      <div class="meta-row">
+        <label>発行日</label>
+        <input type="date" id="issue_date">
+      </div>
+      <div class="meta-row">
+        <label>支払期限</label>
+        <input type="date" id="due_date">
+      </div>
+    </div>
+  </header>
+
+  <section class="parties">
+    <div class="party client">
+      <div class="party-name-row">
+        <span>宛先</span>
+      </div>
+      <textarea id="clientBlock" placeholder="取引先を選択すると自動入力されます"></textarea>
+    </div>
+    <div class="party issuer">
+      <div class="party-name-row">
+        <span>発行元</span>
+      </div>
+      <textarea id="issuerBlock" placeholder="自社情報を選択すると自動入力されます"></textarea>
+    </div>
+  </section>
+
+  <section class="subject-row">
+    <label>件名</label>
+    <input type="text" id="subject" placeholder="〇〇に関する請求">
+  </section>
+
+  <section class="total-highlight">
+    <span>ご請求金額</span>
+    <span id="grandTotalDisplay" class="grand-total">¥0</span>
+  </section>
+
+  <section class="items-section">
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th class="col-desc">品目・内容</th>
+          <th class="col-qty">数量</th>
+          <th class="col-unit">単位</th>
+          <th class="col-price">単価</th>
+          <th class="col-tax">税率</th>
+          <th class="col-amount">金額</th>
+          <th class="col-del no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody"></tbody>
+    </table>
+  </section>
+
+  <section class="summary">
+    <table class="summary-table">
+      <tr><td>小計</td><td id="subtotalDisplay">¥0</td></tr>
+      <tbody id="taxBreakdownBody"></tbody>
+      <tr class="grand"><td>合計</td><td id="totalDisplay">¥0</td></tr>
+    </table>
+  </section>
+
+  <section class="bank-section">
+    <h3>お振込先</h3>
+    <textarea id="bankInfo" placeholder="銀行名・支店名・預金種目・口座番号・口座名義"></textarea>
+  </section>
+
+  <section class="notes-section">
+    <h3>備考</h3>
+    <textarea id="notes" placeholder="振込手数料はご負担ください、など"></textarea>
+  </section>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/invoice.js"></script>
+</body>
+</html>
