@@ -1,0 +1,22 @@
+# Cloudflare Workers + D1 デプロイ設定（本番）。
+# ローカル開発は better-sqlite3（npm run dev）で行うため、これはデプロイ時のみ使用する。
+#
+# 事前準備:
+#   1. npm i -g wrangler && wrangler login
+#   2. wrangler d1 create bar-app         # 出力の database_id を下に貼る
+#   3. wrangler d1 execute bar-app --remote --file=src/db/schema.sql   # スキーマ適用
+#   4. （初期データ）src/db/seed の内容を SQL 化するか、管理画面から投入
+#   5. wrangler deploy
+name = "bar-app-api"
+main = "src/index.workers.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bar-app"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# 環境変数（本番の LINE / Google 連携用。Phase 2 以降で使用）
+# [vars]
+# LINE_CHANNEL_ACCESS_TOKEN = "..."   # wrangler secret put で設定推奨
