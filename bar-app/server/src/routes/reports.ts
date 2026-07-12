@@ -49,7 +49,11 @@ export function registerReportRoutes(app: Hono<Env>) {
 
     const { applied } = await upsertRepReport(c.get('db'), report)
     if (!applied) return c.json({ error: 'より新しい日報が既に登録されています。' }, 409)
-    return c.json({ ok: true, id: report.id })
+
+    // ① 代表日報の即時転送（日報グループへ）。失敗しても提出自体は成功とする。
+    const { forwardRepReport } = await import('../lib/delivery.ts')
+    const forward = await forwardRepReport(c.get('db'), c.get('config'), report, Date.now()).catch(() => null)
+    return c.json({ ok: true, id: report.id, forward })
   })
 
   // スタッフ日報の提出

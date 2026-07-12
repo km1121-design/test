@@ -41,6 +41,27 @@ export interface ExpenseLine {
   amount: number
   detail: string
   receiptFileName?: string
+  /** アップロード済み領収書のURL（共有ドライブ or ローカル保存先） */
+  receiptUrl?: string
+}
+
+export interface DeliverySettings {
+  reportGroupId: string
+  staffReportGroupId: string
+  forwardRepEnabled: boolean
+  dailySummaryEnabled: boolean
+  staffDigestEnabled: boolean
+  /** "HH:mm" */
+  summaryTime: string
+}
+
+export interface OutboxEntry {
+  id: string
+  createdAt: number
+  target: string
+  kind: string
+  body: string
+  status: string
 }
 
 /** 代表日報のスタッフ別内訳（売上・来客） */

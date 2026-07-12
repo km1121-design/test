@@ -8,19 +8,33 @@ import { registerReportRoutes } from './routes/reports.ts'
 import { registerAggregateRoutes } from './routes/aggregate.ts'
 import { registerMasterRoutes } from './routes/master.ts'
 import { registerCsvRoutes } from './routes/csv.ts'
+import { registerDeliveryRoutes } from './routes/delivery.ts'
+import { registerUploadRoutes } from './routes/upload.ts'
+
+export interface AppConfig {
+  /** LINE Messaging API のチャネルアクセストークン。未設定ならモック配信 */
+  lineToken?: string
+  /** 外部cronから /api/cron/daily を叩く場合の共有シークレット */
+  cronSecret?: string
+  /** Google サービスアカウントのJSONキー（文字列）。未設定なら写真はモック保存 */
+  googleServiceAccountJson?: string
+  /** 共有ドライブの保存先ルートフォルダID */
+  gdriveRootFolderId?: string
+}
 
 export interface Env {
   Variables: {
     db: Db
     user: SessionUser | null
+    config: AppConfig
   }
 }
 
 /**
- * DBドライバを注入してHonoアプリを構築する。
+ * DBドライバとconfig（LINEトークン等）を注入してHonoアプリを構築する。
  * Node（better-sqlite3）でもCloudflare Workers（D1）でも同じappを使えるようにする。
  */
-export function createApp(getDbForRequest: () => Db) {
+export function createApp(getDbForRequest: () => Db, getConfig: () => AppConfig = () => ({})) {
   const app = new Hono<Env>()
 
   app.use('*', cors())
@@ -30,6 +44,7 @@ export function createApp(getDbForRequest: () => Db) {
   app.use('*', async (c, next) => {
     const db = getDbForRequest()
     c.set('db', db)
+    c.set('config', getConfig())
     const userId = c.req.header('x-user-id')
     if (userId) {
       const staff = await findStaffById(db, userId)
@@ -47,6 +62,8 @@ export function createApp(getDbForRequest: () => Db) {
   registerAggregateRoutes(app)
   registerMasterRoutes(app)
   registerCsvRoutes(app)
+  registerDeliveryRoutes(app)
+  registerUploadRoutes(app)
 
   return app
 }

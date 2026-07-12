@@ -75,7 +75,8 @@ CREATE TABLE IF NOT EXISTS rep_report_expenses (
   category TEXT NOT NULL DEFAULT '',
   amount REAL NOT NULL DEFAULT 0,
   detail TEXT NOT NULL DEFAULT '',
-  receipt_file_name TEXT
+  receipt_file_name TEXT,
+  receipt_url TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_rep_expenses_report ON rep_report_expenses (rep_report_id);
 
@@ -103,3 +104,25 @@ CREATE TABLE IF NOT EXISTS staff_report_customers (
   amount REAL NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_staff_customers_report ON staff_report_customers (staff_report_id);
+
+-- Phase 2: LINE配信設定（単一行）
+CREATE TABLE IF NOT EXISTS delivery_settings (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  report_group_id TEXT NOT NULL DEFAULT '',
+  staff_report_group_id TEXT NOT NULL DEFAULT '',
+  forward_rep_enabled INTEGER NOT NULL DEFAULT 1,
+  daily_summary_enabled INTEGER NOT NULL DEFAULT 1,
+  staff_digest_enabled INTEGER NOT NULL DEFAULT 1,
+  summary_time TEXT NOT NULL DEFAULT '22:00'
+);
+
+-- Phase 2: LINE送信記録（監査・モック検証用）
+CREATE TABLE IF NOT EXISTS line_outbox (
+  id TEXT PRIMARY KEY,
+  created_at INTEGER NOT NULL,
+  target TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'mock'
+);
+CREATE INDEX IF NOT EXISTS idx_line_outbox_created ON line_outbox (created_at DESC);

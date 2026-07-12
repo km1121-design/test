@@ -10,8 +10,9 @@ import { DailyPage } from './pages/DailyPage.tsx'
 import { StaffProgressPage } from './pages/StaffProgressPage.tsx'
 import { MasterPage } from './pages/MasterPage.tsx'
 import { ExportPage } from './pages/ExportPage.tsx'
+import { DeliveryPage } from './pages/DeliveryPage.tsx'
 
-type TabKey = 'report' | 'dashboard' | 'daily' | 'staff' | 'master' | 'export'
+type TabKey = 'report' | 'dashboard' | 'daily' | 'staff' | 'delivery' | 'master' | 'export'
 
 interface Tab {
   key: TabKey
@@ -24,6 +25,7 @@ const TABS: Tab[] = [
   { key: 'dashboard', label: 'ダッシュボード', repOnly: true },
   { key: 'daily', label: '日次進捗', repOnly: true },
   { key: 'staff', label: '個人進捗' },
+  { key: 'delivery', label: 'LINE配信', repOnly: true },
   { key: 'master', label: 'マスター管理', repOnly: true },
   { key: 'export', label: 'CSV出力', repOnly: true },
 ]
@@ -83,6 +85,7 @@ function Shell() {
         {tab === 'dashboard' && isRep && <DashboardPage />}
         {tab === 'daily' && isRep && <DailyPage />}
         {tab === 'staff' && <StaffProgressPage />}
+        {tab === 'delivery' && isRep && <DeliveryPage />}
         {tab === 'master' && isRep && <MasterPage />}
         {tab === 'export' && isRep && <ExportPage />}
       </main>

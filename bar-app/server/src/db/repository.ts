@@ -3,8 +3,10 @@ import type { Db } from './driver.ts'
 import type {
   DailyReportRep,
   DailyReportStaff,
+  DeliverySettings,
   Department,
   DepartmentGoal,
+  OutboxEntry,
   RateMaster,
   StaffMember,
 } from '../types.ts'
@@ -162,8 +164,8 @@ async function hydrateRep(db: Db, row: RepRow): Promise<DailyReportRep> {
     'SELECT staff_id, sales, customer_count FROM rep_report_staff_breakdown WHERE rep_report_id = ?',
     [row.id],
   )
-  const expenses = await db.all<{ id: string; category: string; amount: number; detail: string; receipt_file_name: string | null }>(
-    'SELECT id, category, amount, detail, receipt_file_name FROM rep_report_expenses WHERE rep_report_id = ?',
+  const expenses = await db.all<{ id: string; category: string; amount: number; detail: string; receipt_file_name: string | null; receipt_url: string | null }>(
+    'SELECT id, category, amount, detail, receipt_file_name, receipt_url FROM rep_report_expenses WHERE rep_report_id = ?',
     [row.id],
   )
   return {
@@ -189,7 +191,14 @@ async function hydrateRep(db: Db, row: RepRow): Promise<DailyReportRep> {
     planReservation: row.plan_reservation,
     planTask: row.plan_task,
     staffBreakdown: breakdown.map((b) => ({ staffId: b.staff_id, sales: b.sales, customerCount: b.customer_count })),
-    expenses: expenses.map((e) => ({ id: e.id, category: e.category, amount: e.amount, detail: e.detail, receiptFileName: e.receipt_file_name ?? undefined })),
+    expenses: expenses.map((e) => ({
+      id: e.id,
+      category: e.category,
+      amount: e.amount,
+      detail: e.detail,
+      receiptFileName: e.receipt_file_name ?? undefined,
+      receiptUrl: e.receipt_url ?? undefined,
+    })),
   }
 }
 
@@ -246,9 +255,10 @@ export async function upsertRepReport(db: Db, report: DailyReportRep): Promise<{
   }
   await db.run('DELETE FROM rep_report_expenses WHERE rep_report_id = ?', [id])
   for (const e of report.expenses) {
-    await db.run('INSERT INTO rep_report_expenses (id, rep_report_id, category, amount, detail, receipt_file_name) VALUES (?, ?, ?, ?, ?, ?)', [
-      e.id || randomUUID(), id, e.category, e.amount, e.detail, e.receiptFileName ?? null,
-    ])
+    await db.run(
+      'INSERT INTO rep_report_expenses (id, rep_report_id, category, amount, detail, receipt_file_name, receipt_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [e.id || randomUUID(), id, e.category, e.amount, e.detail, e.receiptFileName ?? null, e.receiptUrl ?? null],
+    )
   }
   return { applied: true }
 }
@@ -333,4 +343,84 @@ export async function upsertStaffReport(db: Db, report: DailyReportStaff): Promi
     ])
   }
   return { applied: true }
+}
+
+// --- delivery settings (Phase 2) -------------------------------------------
+
+interface DeliveryRow {
+  report_group_id: string
+  staff_report_group_id: string
+  forward_rep_enabled: number
+  daily_summary_enabled: number
+  staff_digest_enabled: number
+  summary_time: string
+}
+
+export async function getDeliverySettings(db: Db): Promise<DeliverySettings> {
+  const row = await db.get<DeliveryRow>('SELECT * FROM delivery_settings WHERE id = 1')
+  if (!row) {
+    return {
+      reportGroupId: '',
+      staffReportGroupId: '',
+      forwardRepEnabled: true,
+      dailySummaryEnabled: true,
+      staffDigestEnabled: true,
+      summaryTime: '22:00',
+    }
+  }
+  return {
+    reportGroupId: row.report_group_id,
+    staffReportGroupId: row.staff_report_group_id,
+    forwardRepEnabled: row.forward_rep_enabled === 1,
+    dailySummaryEnabled: row.daily_summary_enabled === 1,
+    staffDigestEnabled: row.staff_digest_enabled === 1,
+    summaryTime: row.summary_time,
+  }
+}
+
+export async function upsertDeliverySettings(db: Db, s: DeliverySettings): Promise<void> {
+  await db.run(
+    `INSERT INTO delivery_settings (id, report_group_id, staff_report_group_id, forward_rep_enabled,
+       daily_summary_enabled, staff_digest_enabled, summary_time)
+     VALUES (1, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT (id) DO UPDATE SET
+       report_group_id = excluded.report_group_id, staff_report_group_id = excluded.staff_report_group_id,
+       forward_rep_enabled = excluded.forward_rep_enabled, daily_summary_enabled = excluded.daily_summary_enabled,
+       staff_digest_enabled = excluded.staff_digest_enabled, summary_time = excluded.summary_time`,
+    [
+      s.reportGroupId,
+      s.staffReportGroupId,
+      s.forwardRepEnabled ? 1 : 0,
+      s.dailySummaryEnabled ? 1 : 0,
+      s.staffDigestEnabled ? 1 : 0,
+      s.summaryTime,
+    ],
+  )
+}
+
+// --- line outbox (Phase 2) -------------------------------------------------
+
+export async function recordOutbox(db: Db, entry: OutboxEntry): Promise<void> {
+  await db.run('INSERT INTO line_outbox (id, created_at, target, kind, body, status) VALUES (?, ?, ?, ?, ?, ?)', [
+    entry.id,
+    entry.createdAt,
+    entry.target,
+    entry.kind,
+    entry.body,
+    entry.status,
+  ])
+}
+
+export async function getRecentOutbox(db: Db, limit = 20): Promise<OutboxEntry[]> {
+  const rows = await db.all<{ id: string; created_at: number; target: string; kind: string; body: string; status: string }>(
+    'SELECT * FROM line_outbox ORDER BY created_at DESC LIMIT ?',
+    [limit],
+  )
+  return rows.map((r) => ({ id: r.id, createdAt: r.created_at, target: r.target, kind: r.kind, body: r.body, status: r.status }))
+}
+
+/** 当月のグループ向けpush通数（無料枠監視用・決定G）。個人宛は別カウント想定だがPhase2ではグループのみ */
+export async function countOutboxThisMonth(db: Db, monthStartMs: number): Promise<number> {
+  const row = await db.get<{ c: number }>("SELECT COUNT(*) AS c FROM line_outbox WHERE created_at >= ? AND status IN ('sent','mock')", [monthStartMs])
+  return row?.c ?? 0
 }

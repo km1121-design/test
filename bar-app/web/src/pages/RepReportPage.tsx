@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2, Copy } from 'lucide-react'
+import { Plus, Trash2, Copy, Image as ImageIcon } from 'lucide-react'
 import type { SessionUser } from '../lib/types.ts'
 import { api, formatCurrency, todayISO } from '../lib/api.ts'
 import { useAuth } from '../lib/auth.tsx'
@@ -17,10 +17,22 @@ interface ExpenseRow {
   category: string
   amount: number
   detail: string
+  receiptFileName?: string
+  receiptUrl?: string
+  uploading?: boolean
 }
 
 let keyCounter = 0
 const nextKey = () => `e${keyCounter++}`
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error('ファイル読み込みに失敗しました'))
+    reader.readAsDataURL(file)
+  })
+}
 
 export function RepReportPage() {
   const { user } = useAuth()
@@ -74,7 +86,7 @@ export function RepReportPage() {
       groupsCount: number; newCustomers: number; existingCustomers: number; comment: string
       planAttendance: string; planReservation: string; planTask: string; hiaceSales: number; hqSales: number; eventSales: number
       staffBreakdown: { staffId: string; sales: number; customerCount: number }[]
-      expenses: { category: string; amount: number; detail: string }[]
+      expenses: { category: string; amount: number; detail: string; receiptFileName?: string; receiptUrl?: string }[]
     }
     setOverallSales(r.overallSales); setPersonalSales(r.personalSales)
     setCashSales(r.cashSales); setCardSales(r.cardSales); setEmoneySales(r.emoneySales); setQrSales(r.qrSales)
@@ -85,8 +97,27 @@ export function RepReportPage() {
       const found = r.staffBreakdown.find((x) => x.staffId === b.staffId)
       return found ? { ...b, sales: found.sales, customerCount: found.customerCount } : b
     }))
-    setExpenses(r.expenses.map((e) => ({ key: nextKey(), category: e.category, amount: e.amount, detail: e.detail })))
+    setExpenses(r.expenses.map((e) => ({ key: nextKey(), category: e.category, amount: e.amount, detail: e.detail, receiptFileName: e.receiptFileName, receiptUrl: e.receiptUrl })))
     showToast('既存の日報を読み込みました', 'success')
+  }
+
+  const uploadReceipt = async (key: string, idx: number, file: File) => {
+    setExpenses((p) => p.map((x) => (x.key === key ? { ...x, uploading: true } : x)))
+    try {
+      const bytesBase64 = await fileToBase64(file)
+      const res = await api.post<{ fileName: string; url: string; mock: boolean }>('/api/upload/receipt', {
+        date,
+        kind: '領収書',
+        seq: idx + 1,
+        contentType: file.type || 'image/jpeg',
+        bytesBase64,
+      })
+      setExpenses((p) => p.map((x) => (x.key === key ? { ...x, uploading: false, receiptFileName: res.fileName, receiptUrl: res.url } : x)))
+      showToast(res.mock ? '写真を記録しました（モック保存）' : '写真を共有ドライブに保存しました', 'success')
+    } catch (e) {
+      setExpenses((p) => p.map((x) => (x.key === key ? { ...x, uploading: false } : x)))
+      showToast((e as Error).message, 'warning')
+    }
   }
 
   const submit = async () => {
@@ -101,7 +132,7 @@ export function RepReportPage() {
         groupsCount, newCustomers, existingCustomers,
         comment, planAttendance, planReservation, planTask,
         staffBreakdown: breakdown.map((b) => ({ staffId: b.staffId, sales: b.sales, customerCount: b.customerCount })),
-        expenses: expenses.map((e) => ({ category: e.category, amount: e.amount, detail: e.detail })),
+        expenses: expenses.map((e) => ({ category: e.category, amount: e.amount, detail: e.detail, receiptFileName: e.receiptFileName, receiptUrl: e.receiptUrl })),
       })
       showToast('代表日報を提出しました。ダッシュボードに反映されました', 'success')
     } catch (e) {
@@ -193,15 +224,34 @@ export function RepReportPage() {
       <fieldset className="rounded-lg border border-white/10 bg-[var(--surface-2)] p-4">
         <legend className="px-1 text-sm font-bold text-white">経費</legend>
         <div className="mt-2 flex flex-col gap-2">
-          {expenses.map((e) => (
-            <div key={e.key} className="grid grid-cols-1 gap-2 rounded-md border border-white/10 p-2 sm:grid-cols-[1fr_1fr_2fr_auto]">
-              <TextField label="費目" value={e.category} onChange={(v) => setExpenses((p) => p.map((x) => (x.key === e.key ? { ...x, category: v } : x)))} />
-              <NumberField label="金額" value={e.amount} onChange={(v) => setExpenses((p) => p.map((x) => (x.key === e.key ? { ...x, amount: v } : x)))} suffix="円" />
-              <TextField label="内容" value={e.detail} onChange={(v) => setExpenses((p) => p.map((x) => (x.key === e.key ? { ...x, detail: v } : x)))} />
-              <div className="flex items-end">
-                <button type="button" onClick={() => setExpenses((p) => p.filter((x) => x.key !== e.key))} className="rounded-md border border-white/10 p-2 text-[var(--text-secondary)] hover:bg-white/5" aria-label="経費を削除">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+          {expenses.map((e, idx) => (
+            <div key={e.key} className="flex flex-col gap-2 rounded-md border border-white/10 p-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_2fr_auto]">
+                <TextField label="費目" value={e.category} onChange={(v) => setExpenses((p) => p.map((x) => (x.key === e.key ? { ...x, category: v } : x)))} />
+                <NumberField label="金額" value={e.amount} onChange={(v) => setExpenses((p) => p.map((x) => (x.key === e.key ? { ...x, amount: v } : x)))} suffix="円" />
+                <TextField label="内容" value={e.detail} onChange={(v) => setExpenses((p) => p.map((x) => (x.key === e.key ? { ...x, detail: v } : x)))} />
+                <div className="flex items-end">
+                  <button type="button" onClick={() => setExpenses((p) => p.filter((x) => x.key !== e.key))} className="rounded-md border border-white/10 p-2 text-[var(--text-secondary)] hover:bg-white/5" aria-label="経費を削除">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 px-1">
+                <label className="flex cursor-pointer items-center gap-1.5 text-xs text-[var(--text-secondary)] hover:text-white">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  {e.uploading ? 'アップロード中…' : '領収書写真を添付'}
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={(ev) => {
+                      const file = ev.target.files?.[0]
+                      if (file) void uploadReceipt(e.key, idx, file)
+                      ev.target.value = ''
+                    }}
+                  />
+                </label>
+                {e.receiptFileName && <span className="text-[11px] text-[var(--status-good)]">✓ {e.receiptFileName}</span>}
               </div>
             </div>
           ))}
@@ -210,7 +260,9 @@ export function RepReportPage() {
             経費行を追加
           </button>
         </div>
-        <p className="mt-2 text-[11px] text-[var(--muted)]">※ 領収書写真のアップロード・共有ドライブ保存は Phase 2 で追加します。</p>
+        <p className="mt-2 text-[11px] text-[var(--muted)]">
+          ※ 領収書写真は共有ドライブの「伝票/年/月/日」に保存されます（認証情報未設定の環境では保存先パスのみ記録するモック動作）。
+        </p>
       </fieldset>
 
       <button type="button" onClick={submit} className="w-fit rounded-md bg-amber-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-amber-400">

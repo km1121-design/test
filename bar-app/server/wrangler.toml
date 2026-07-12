@@ -17,6 +17,14 @@ binding = "DB"
 database_name = "bar-app"
 database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 
-# 環境変数（本番の LINE / Google 連携用。Phase 2 以降で使用）
-# [vars]
-# LINE_CHANNEL_ACCESS_TOKEN = "..."   # wrangler secret put で設定推奨
+# 日次配信のCron（②サマリー＋⑤スタッフ日報まとめ）。
+# 決定J: サマリー22:00 JST。Cron はUTC指定のため 22:00 JST = 13:00 UTC。
+# scheduled() ハンドラ（src/index.workers.ts）から runDailyDelivery() を呼ぶ。
+[triggers]
+crons = ["0 13 * * *"]
+
+# 本番のシークレットは wrangler secret put で設定する（wrangler.toml には書かない）:
+#   wrangler secret put LINE_CHANNEL_ACCESS_TOKEN
+#   wrangler secret put GOOGLE_SERVICE_ACCOUNT_KEY
+#   wrangler secret put GDRIVE_ROOT_FOLDER_ID
+#   wrangler secret put CRON_SECRET   # 外部cronから /api/cron/daily を叩く場合のみ

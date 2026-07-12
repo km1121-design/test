@@ -1,5 +1,5 @@
 import { getDb } from './sqlite.node.ts'
-import { getAllStaff, upsertDepartmentGoal, upsertRates, upsertStaff } from './repository.ts'
+import { getAllStaff, upsertDeliverySettings, upsertDepartmentGoal, upsertRates, upsertStaff } from './repository.ts'
 import type { Department, StaffMember } from '../types.ts'
 
 const DEFAULT_RATES = {
@@ -44,8 +44,16 @@ async function seed() {
       await upsertDepartmentGoal(db, { department, month, monthlySalesGoal: 3_000_000, businessDays: 26 })
     }
   }
+  await upsertDeliverySettings(db, {
+    reportGroupId: '',
+    staffReportGroupId: '',
+    forwardRepEnabled: true,
+    dailySummaryEnabled: true,
+    staffDigestEnabled: true,
+    summaryTime: '22:00',
+  })
   const staff = await getAllStaff(db)
-  console.log(`seed完了: スタッフ${staff.length}名、パラメータ、直近3ヶ月の部門目標を投入しました。`)
+  console.log(`seed完了: スタッフ${staff.length}名、パラメータ、配信設定、直近3ヶ月の部門目標を投入しました。`)
 }
 
 seed()

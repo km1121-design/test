@@ -5,8 +5,8 @@
 
 日報の入力・分析はアプリで行い、LINEへは配信のみ行う「アプリ入力・LINE配信型」。
 確定した要件定義は `docs/bar-app-requirements.md`（v1.2・壁打ち論点A〜Rの決定事項
-ログ付き）を参照。**Phase 1（アプリ本体：日報入力＋経営分析＋認証＋CSV出力）を
-`bar-app/` に実装済み**。
+ログ付き）を参照。**`bar-app/` に Phase 1（日報入力＋経営分析＋認証＋CSV出力）＋
+Phase 2（LINE配信①②⑤＋配信設定＋領収書写真の共有ドライブ保存）を実装済み**。
 
 ```bash
 # サーバー（Hono + SQLite／本番はCloudflare Workers + D1）
@@ -16,8 +16,10 @@ cd bar-app/web && npm install && npm run dev
 ```
 
 セットアップ・Cloudflareデプロイ手順は `bar-app/README.md` を参照。決済手数料の
-自動計算、BAR全体売上と代表個人売上の分離、スタッフ別内訳、CSVエクスポートに対応。
-LINE配信・LIFFログイン・写真アップロードは Phase 2 以降で追加。
+自動計算、BAR全体売上と代表個人売上の分離、スタッフ別内訳、CSVエクスポート、
+LINE配信（日報転送・日次サマリー・スタッフ日報まとめ）、領収書写真の共有ドライブ保存に
+対応。LINE/Google認証情報が無い環境ではモックモードで動作検証できる。未提出
+リマインド・LIFF実接続・推移グラフは Phase 3 で追加。
 
 以下の `bar-dashboard/`・`line-bot/` は方針転換前の実装で、`bar-app/` の移植元
 （部品）です。
