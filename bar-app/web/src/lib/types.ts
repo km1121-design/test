@@ -64,8 +64,16 @@ export interface DashboardAggregate {
   customersCumulative: number
   unitPricePerGroup: number
   unitPricePerCustomer: number
+  forecastLanding: number
+  forecastAchievementRate: number
   staffCumulative: { staffId: string; name: string; sales: number; customerCount: number }[]
   rates: RateMaster
+}
+
+export interface DailyRowExt extends DailyRow {
+  customers: number
+  groups: number
+  unitPrice: number
 }
 
 export interface StaffAggregate {

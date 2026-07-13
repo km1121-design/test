@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { DashboardAggregate, Department } from '../lib/types.ts'
+import type { DashboardAggregate, DailyRowExt, Department } from '../lib/types.ts'
 import { api, currentMonthKey, formatCurrency, formatPercent } from '../lib/api.ts'
 import { useAuth } from '../lib/auth.tsx'
 import { useToast } from '../components/ToastProvider.tsx'
 import { StatCard } from '../components/StatCard.tsx'
 import { DepartmentToggle, MonthSelect } from '../components/Pickers.tsx'
+import { TrendChart } from '../components/TrendChart.tsx'
 
 export function DashboardPage() {
   const { user } = useAuth()
@@ -12,12 +13,17 @@ export function DashboardPage() {
   const [department, setDepartment] = useState<Department>(user!.department)
   const [month, setMonth] = useState(currentMonthKey())
   const [data, setData] = useState<DashboardAggregate | null>(null)
+  const [trend, setTrend] = useState<DailyRowExt[]>([])
 
   useEffect(() => {
     api
       .get<DashboardAggregate>(`/api/aggregate/dashboard?department=${encodeURIComponent(department)}&month=${month}`)
       .then(setData)
       .catch((e: Error) => showToast(e.message, 'warning'))
+    api
+      .get<{ rows: DailyRowExt[] }>(`/api/aggregate/daily?department=${encodeURIComponent(department)}&month=${month}`)
+      .then((d) => setTrend(d.rows))
+      .catch(() => setTrend([]))
   }, [department, month, showToast])
 
   return (
@@ -50,6 +56,17 @@ export function DashboardPage() {
             <StatCard label="当月利益（暫定）" value={formatCurrency(data.monthlyProfit)} tone={data.monthlyProfit >= 0 ? 'good' : 'bad'} />
             <StatCard label="個人インセン" value={formatCurrency(data.personalIncentive)} />
             <StatCard label="会社利益（暫定）" value={formatCurrency(data.companyProfit)} tone={data.companyProfit >= 0 ? 'good' : 'bad'} />
+            <StatCard
+              label="着地予測（現ペース）"
+              value={formatCurrency(data.forecastLanding)}
+              sub={`予測達成率 ${formatPercent(data.forecastAchievementRate)}`}
+              tone={data.forecastLanding >= data.goal ? 'good' : 'bad'}
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-bold text-white">推移グラフ</h3>
+            <TrendChart points={trend} />
           </div>
 
           <div>

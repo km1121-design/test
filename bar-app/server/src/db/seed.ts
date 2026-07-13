@@ -51,6 +51,10 @@ async function seed() {
     dailySummaryEnabled: true,
     staffDigestEnabled: true,
     summaryTime: '22:00',
+    reminderEnabled: true,
+    reminderTime: '19:00',
+    alertEnabled: true,
+    paceDropThreshold: 0.2,
   })
   const staff = await getAllStaff(db)
   console.log(`seed完了: スタッフ${staff.length}名、パラメータ、配信設定、直近3ヶ月の部門目標を投入しました。`)

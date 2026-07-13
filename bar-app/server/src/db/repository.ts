@@ -354,6 +354,10 @@ interface DeliveryRow {
   daily_summary_enabled: number
   staff_digest_enabled: number
   summary_time: string
+  reminder_enabled: number
+  reminder_time: string
+  alert_enabled: number
+  pace_drop_threshold: number
 }
 
 export async function getDeliverySettings(db: Db): Promise<DeliverySettings> {
@@ -366,6 +370,10 @@ export async function getDeliverySettings(db: Db): Promise<DeliverySettings> {
       dailySummaryEnabled: true,
       staffDigestEnabled: true,
       summaryTime: '22:00',
+      reminderEnabled: true,
+      reminderTime: '19:00',
+      alertEnabled: true,
+      paceDropThreshold: 0.2,
     }
   }
   return {
@@ -375,18 +383,25 @@ export async function getDeliverySettings(db: Db): Promise<DeliverySettings> {
     dailySummaryEnabled: row.daily_summary_enabled === 1,
     staffDigestEnabled: row.staff_digest_enabled === 1,
     summaryTime: row.summary_time,
+    reminderEnabled: row.reminder_enabled === 1,
+    reminderTime: row.reminder_time,
+    alertEnabled: row.alert_enabled === 1,
+    paceDropThreshold: row.pace_drop_threshold,
   }
 }
 
 export async function upsertDeliverySettings(db: Db, s: DeliverySettings): Promise<void> {
   await db.run(
     `INSERT INTO delivery_settings (id, report_group_id, staff_report_group_id, forward_rep_enabled,
-       daily_summary_enabled, staff_digest_enabled, summary_time)
-     VALUES (1, ?, ?, ?, ?, ?, ?)
+       daily_summary_enabled, staff_digest_enabled, summary_time,
+       reminder_enabled, reminder_time, alert_enabled, pace_drop_threshold)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (id) DO UPDATE SET
        report_group_id = excluded.report_group_id, staff_report_group_id = excluded.staff_report_group_id,
        forward_rep_enabled = excluded.forward_rep_enabled, daily_summary_enabled = excluded.daily_summary_enabled,
-       staff_digest_enabled = excluded.staff_digest_enabled, summary_time = excluded.summary_time`,
+       staff_digest_enabled = excluded.staff_digest_enabled, summary_time = excluded.summary_time,
+       reminder_enabled = excluded.reminder_enabled, reminder_time = excluded.reminder_time,
+       alert_enabled = excluded.alert_enabled, pace_drop_threshold = excluded.pace_drop_threshold`,
     [
       s.reportGroupId,
       s.staffReportGroupId,
@@ -394,6 +409,10 @@ export async function upsertDeliverySettings(db: Db, s: DeliverySettings): Promi
       s.dailySummaryEnabled ? 1 : 0,
       s.staffDigestEnabled ? 1 : 0,
       s.summaryTime,
+      s.reminderEnabled ? 1 : 0,
+      s.reminderTime,
+      s.alertEnabled ? 1 : 0,
+      s.paceDropThreshold,
     ],
   )
 }

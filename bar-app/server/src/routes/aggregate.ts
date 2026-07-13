@@ -113,6 +113,7 @@ export function registerAggregateRoutes(app: Hono<Env>) {
           }, 0)
         const fee = paymentFeeForReport(r, rates)
         cumulative += r.overallSales
+        const customers = r.newCustomers + r.existingCustomers
         return {
           date: r.date,
           overallSales: r.overallSales,
@@ -123,6 +124,9 @@ export function registerAggregateRoutes(app: Hono<Env>) {
           laborCost: labor,
           dailyProfit: taxExclude(r.overallSales, rates.taxRate) - expense - labor - fee,
           cumulative,
+          customers,
+          groups: r.groupsCount,
+          unitPrice: customers > 0 ? r.overallSales / customers : 0,
         }
       })
     return c.json({ department, month, rows })

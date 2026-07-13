@@ -118,3 +118,95 @@ export async function runDailyDelivery(db: Db, config: AppConfig, dateArg: strin
 
   return { date, summary, digest }
 }
+
+// ③ 未提出リマインド ---------------------------------------------------------
+
+export interface ReminderResult {
+  date: string
+  reminded: { staffId: string; name: string; target: string; status: string }[]
+}
+
+/** 締め時刻に、対象日の日報が未提出の在籍者へ個別push（本人のLINE） */
+export async function runReminders(db: Db, config: AppConfig, dateArg: string | undefined, now: number): Promise<ReminderResult> {
+  const date = dateArg || todayISO(now)
+  const month = date.slice(0, 7)
+  const settings = await getDeliverySettings(db)
+  const reminded: ReminderResult['reminded'] = []
+  if (!settings.reminderEnabled) return { date, reminded }
+
+  const staff = await getAllStaff(db)
+
+  // 提出済みの判定材料
+  const repByDept = new Map<Department, string[]>()
+  const staffSubmitted = new Set<string>()
+  for (const department of DEPARTMENTS) {
+    const reps = (await getRepReportsByMonth(db, department, month)).filter((r) => r.date === date)
+    repByDept.set(department, reps.map((r) => r.reporterName))
+    const staffReports = (await getStaffReportsByMonth(db, department, month)).filter((r) => r.date === date)
+    for (const sr of staffReports) staffSubmitted.add(sr.staffId)
+  }
+
+  for (const member of staff) {
+    const submitted =
+      member.role === '代表'
+        ? (repByDept.get(member.department) ?? []).includes(member.name)
+        : staffSubmitted.has(member.id)
+    if (submitted) continue
+
+    // 未紐付け(lineUserId無し)はモック宛先 line:<id> を使う。
+    // 実push時はLINE側で不達となり failed 記録される（＝要紐付けの検知になる）。
+    const target = member.lineUserId || `line:${member.id}`
+    const text = `【日報リマインド】${member.name}さん\n${date} の日報が未提出です。アプリから提出をお願いします。`
+    const result = await pushText(db, { token: config.lineToken, to: target, text, kind: 'reminder', now })
+    reminded.push({ staffId: member.id, name: member.name, target, status: result.status })
+  }
+  return { date, reminded }
+}
+
+// ④ 異常アラート -------------------------------------------------------------
+
+export interface AlertResult {
+  date: string
+  alerts: { department: Department; message: string; target: string; status: string }[]
+}
+
+/** 達成ペースが予定比でしきい値以上下振れした部門について、代表へアラート */
+export async function runAlerts(db: Db, config: AppConfig, dateArg: string | undefined, now: number): Promise<AlertResult> {
+  const date = dateArg || todayISO(now)
+  const month = date.slice(0, 7)
+  const settings = await getDeliverySettings(db)
+  const alerts: AlertResult['alerts'] = []
+  if (!settings.alertEnabled) return { date, alerts }
+
+  const rates = await getRates(db)
+  const staff = await getAllStaff(db)
+
+  for (const department of DEPARTMENTS) {
+    const goal = await getDepartmentGoal(db, department, month)
+    if (!goal || goal.monthlySalesGoal <= 0 || goal.businessDays <= 0) continue
+    const repReports = await getRepReportsByMonth(db, department, month)
+    const staffReports = await getStaffReportsByMonth(db, department, month)
+    const agg = aggregateMonthlyRep({ department, month, asOfDate: date, goal, rates, staff, repReports, staffReports })
+
+    const elapsed = goal.businessDays - agg.remainingBusinessDays
+    if (elapsed <= 0) continue
+    const expected = (goal.monthlySalesGoal * elapsed) / goal.businessDays
+    if (expected <= 0) continue
+    const shortfallRatio = (expected - agg.overallCumulative) / expected
+    if (shortfallRatio >= settings.paceDropThreshold) {
+      const msg =
+        `【達成ペース警告】${department}\n` +
+        `${date}時点の当月累計 ¥${Math.round(agg.overallCumulative).toLocaleString('ja-JP')} は、` +
+        `予定ペース ¥${Math.round(expected).toLocaleString('ja-JP')} を ` +
+        `${(shortfallRatio * 100).toFixed(0)}% 下回っています（達成率 ${(agg.achievementRate * 100).toFixed(1)}%）。\n` +
+        `残${agg.remainingBusinessDays}日・1日必達 ¥${Math.round(agg.dailyRequired).toLocaleString('ja-JP')}。`
+      const reps = staff.filter((s) => s.role === '代表' && s.department === department)
+      for (const rep of reps) {
+        const target = rep.lineUserId || `line:${rep.id}`
+        const result = await pushText(db, { token: config.lineToken, to: target, text: msg, kind: 'alert', now })
+        alerts.push({ department, message: msg, target, status: result.status })
+      }
+    }
+  }
+  return { date, alerts }
+}

@@ -17,11 +17,12 @@ binding = "DB"
 database_name = "bar-app"
 database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 
-# 日次配信のCron（②サマリー＋⑤スタッフ日報まとめ）。
-# 決定J: サマリー22:00 JST。Cron はUTC指定のため 22:00 JST = 13:00 UTC。
-# scheduled() ハンドラ（src/index.workers.ts）から runDailyDelivery() を呼ぶ。
+# 日次のCron。CronはUTC指定（JST = UTC+9）。
+#   "0 10 * * *" = 19:00 JST → ③未提出リマインド（締め時刻）
+#   "0 13 * * *" = 22:00 JST → ②日次サマリー＋⑤スタッフ日報まとめ＋④異常アラート
+# scheduled() ハンドラ（src/index.workers.ts）が event.cron で分岐する。
 [triggers]
-crons = ["0 13 * * *"]
+crons = ["0 10 * * *", "0 13 * * *"]
 
 # 本番のシークレットは wrangler secret put で設定する（wrangler.toml には書かない）:
 #   wrangler secret put LINE_CHANNEL_ACCESS_TOKEN

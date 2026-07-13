@@ -53,6 +53,14 @@ export interface DeliverySettings {
   staffDigestEnabled: boolean
   /** "HH:mm" */
   summaryTime: string
+  /** Phase 3: 未提出リマインド */
+  reminderEnabled: boolean
+  /** 締め時刻 "HH:mm"（この時刻に未提出者へ個別通知） */
+  reminderTime: string
+  /** Phase 3: 異常アラート */
+  alertEnabled: boolean
+  /** 達成ペースが予定比でこの割合以上下振れしたら代表へアラート（0.2 = 20%） */
+  paceDropThreshold: number
 }
 
 export interface OutboxEntry {

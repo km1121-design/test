@@ -113,7 +113,12 @@ CREATE TABLE IF NOT EXISTS delivery_settings (
   forward_rep_enabled INTEGER NOT NULL DEFAULT 1,
   daily_summary_enabled INTEGER NOT NULL DEFAULT 1,
   staff_digest_enabled INTEGER NOT NULL DEFAULT 1,
-  summary_time TEXT NOT NULL DEFAULT '22:00'
+  summary_time TEXT NOT NULL DEFAULT '22:00',
+  -- Phase 3
+  reminder_enabled INTEGER NOT NULL DEFAULT 1,
+  reminder_time TEXT NOT NULL DEFAULT '19:00',
+  alert_enabled INTEGER NOT NULL DEFAULT 1,
+  pace_drop_threshold REAL NOT NULL DEFAULT 0.2
 );
 
 -- Phase 2: LINE送信記録（監査・モック検証用）

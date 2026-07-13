@@ -91,6 +91,10 @@ export interface MonthlyRepAggregate {
   unitPricePerGroup: number
   unitPricePerCustomer: number
   staffCumulative: { staffId: string; sales: number; customerCount: number }[]
+  /** 着地予測: 現ペース（経過営業日あたり売上）× 営業日数 */
+  forecastLanding: number
+  /** 着地予測の対目標達成率 */
+  forecastAchievementRate: number
 }
 
 export interface AggregateInput {
@@ -161,6 +165,11 @@ export function aggregateMonthlyRep(input: AggregateInput): MonthlyRepAggregate 
   const groupsCumulative = repReports.reduce((s, r) => s + r.groupsCount, 0)
   const customersCumulative = newCustomersCumulative + existingCustomersCumulative
 
+  // 着地予測: 実際に日報が出た日数（＝稼働実績）を経過営業日とみなし、現ペースを月末まで延長
+  const elapsedBusinessDays = Math.max(0, goal.businessDays - remainingBusinessDays)
+  const forecastLanding = elapsedBusinessDays > 0 ? (overallCumulative / elapsedBusinessDays) * goal.businessDays : overallCumulative
+  const forecastAchievementRate = goal.monthlySalesGoal > 0 ? forecastLanding / goal.monthlySalesGoal : 0
+
   return {
     goal: goal.monthlySalesGoal,
     businessDays: goal.businessDays,
@@ -186,6 +195,8 @@ export function aggregateMonthlyRep(input: AggregateInput): MonthlyRepAggregate 
     unitPricePerGroup: groupsCumulative > 0 ? overallCumulative / groupsCumulative : 0,
     unitPricePerCustomer: customersCumulative > 0 ? overallCumulative / customersCumulative : 0,
     staffCumulative: [...staffCumMap.entries()].map(([staffId, v]) => ({ staffId, ...v })),
+    forecastLanding,
+    forecastAchievementRate,
   }
 }
 

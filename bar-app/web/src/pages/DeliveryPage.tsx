@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Send, RefreshCw } from 'lucide-react'
 import { api, todayISO } from '../lib/api.ts'
 import { useToast } from '../components/ToastProvider.tsx'
-import { TextField, TimeField } from '../components/FormControls.tsx'
+import { NumberField, TextField, TimeField } from '../components/FormControls.tsx'
 
 interface DeliverySettings {
   reportGroupId: string
@@ -11,6 +11,10 @@ interface DeliverySettings {
   dailySummaryEnabled: boolean
   staffDigestEnabled: boolean
   summaryTime: string
+  reminderEnabled: boolean
+  reminderTime: string
+  alertEnabled: boolean
+  paceDropThreshold: number
 }
 
 interface OutboxData {
@@ -24,6 +28,8 @@ const KIND_LABEL: Record<string, string> = {
   'rep-forward': '①代表日報転送',
   'daily-summary': '②日次サマリー',
   'staff-digest': '⑤スタッフ日報まとめ',
+  reminder: '③未提出リマインド',
+  alert: '④異常アラート',
 }
 const STATUS_LABEL: Record<string, string> = { sent: '送信済', mock: 'モック', failed: '失敗' }
 
@@ -78,6 +84,29 @@ export function DeliveryPage() {
     }
   }
 
+  const runReminders = async () => {
+    try {
+      const res = await api.post<{ reminded: { name: string; status: string; target: string }[] }>('/api/delivery/run-reminders', { date: runDate })
+      const lines = res.reminded.map((r) => `[${r.status}] ${r.name} → ${r.target}`)
+      setPreview(res.reminded.length ? `【未提出リマインド】${runDate}\n\n${lines.join('\n')}` : `${runDate} は未提出者なし（全員提出済み）`)
+      showToast(`リマインド ${res.reminded.length}件を実行しました`, 'success')
+      loadOutbox()
+    } catch (e) {
+      showToast((e as Error).message, 'warning')
+    }
+  }
+
+  const runAlerts = async () => {
+    try {
+      const res = await api.post<{ alerts: { message: string }[] }>('/api/delivery/run-alerts', { date: runDate })
+      setPreview(res.alerts.length ? res.alerts.map((a) => a.message).join('\n\n──────────\n\n') : `${runDate} 時点でアラート対象なし`)
+      showToast(`アラート ${res.alerts.length}件を実行しました`, 'success')
+      loadOutbox()
+    } catch (e) {
+      showToast((e as Error).message, 'warning')
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-lg border border-white/10 bg-[var(--surface-2)] p-4">
@@ -96,6 +125,12 @@ export function DeliveryPage() {
           <Toggle label="①日報転送" desc="代表日報の提出時に即時転送" value={settings.forwardRepEnabled} onChange={(v) => patch({ forwardRepEnabled: v })} />
           <Toggle label="②日次サマリー" desc="毎日定時に日報グループへ" value={settings.dailySummaryEnabled} onChange={(v) => patch({ dailySummaryEnabled: v })} />
           <Toggle label="⑤スタッフ日報まとめ" desc="専用グループへ1日1通" value={settings.staffDigestEnabled} onChange={(v) => patch({ staffDigestEnabled: v })} />
+          <Toggle label="③未提出リマインド" desc="締め時刻に未提出者へ個別通知" value={settings.reminderEnabled} onChange={(v) => patch({ reminderEnabled: v })} />
+          <Toggle label="④異常アラート" desc="達成ペース急落時に代表へ通知" value={settings.alertEnabled} onChange={(v) => patch({ alertEnabled: v })} />
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <TimeField label="締め時刻（リマインド発火）" value={settings.reminderTime} onChange={(v) => patch({ reminderTime: v })} />
+          <NumberField label="アラート発火しきい値（ペース下振れ）" value={Math.round(settings.paceDropThreshold * 100)} onChange={(v) => patch({ paceDropThreshold: v / 100 })} suffix="%" />
         </div>
         <button type="button" onClick={save} className="mt-4 rounded-md bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400">保存</button>
       </section>
@@ -112,7 +147,15 @@ export function DeliveryPage() {
           </div>
           <button type="button" onClick={runDaily} className="flex items-center gap-1.5 rounded-md bg-amber-500 px-4 py-2 text-sm font-bold text-black hover:bg-amber-400">
             <Send className="h-4 w-4" />
-            今すぐ配信
+            ②＋⑤配信
+          </button>
+          <button type="button" onClick={runReminders} className="flex items-center gap-1.5 rounded-md border border-white/15 px-4 py-2 text-sm font-medium text-white hover:bg-white/5">
+            <Send className="h-4 w-4" />
+            ③リマインド
+          </button>
+          <button type="button" onClick={runAlerts} className="flex items-center gap-1.5 rounded-md border border-white/15 px-4 py-2 text-sm font-medium text-white hover:bg-white/5">
+            <Send className="h-4 w-4" />
+            ④アラート
           </button>
         </div>
         {preview && (

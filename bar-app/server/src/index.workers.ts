@@ -1,6 +1,6 @@
 import { createApp, type AppConfig } from './app.ts'
 import { D1Db } from './db/d1.ts'
-import { runDailyDelivery } from './lib/delivery.ts'
+import { runDailyDelivery, runReminders, runAlerts } from './lib/delivery.ts'
 
 /**
  * Cloudflare Workers エントリ（本番）。
@@ -31,8 +31,19 @@ export default {
     return app.fetch(request)
   },
 
-  // Cron Trigger（wrangler.toml の [triggers] crons）から呼ばれる
-  async scheduled(_event: unknown, env: WorkerEnv): Promise<void> {
-    await runDailyDelivery(new D1Db(env.DB), configOf(env), undefined, Date.now())
+  // Cron Trigger（wrangler.toml の [triggers] crons）から呼ばれる。
+  // event.cron でスケジュールを判別する:
+  //   "0 10 * * *" = 19:00 JST → ③未提出リマインド
+  //   "0 13 * * *" = 22:00 JST → ②日次サマリー＋⑤まとめ＋④アラート
+  async scheduled(event: { cron?: string }, env: WorkerEnv): Promise<void> {
+    const db = new D1Db(env.DB)
+    const cfg = configOf(env)
+    const now = Date.now()
+    if (event.cron === '0 10 * * *') {
+      await runReminders(db, cfg, undefined, now)
+    } else {
+      await runDailyDelivery(db, cfg, undefined, now)
+      await runAlerts(db, cfg, undefined, now)
+    }
   },
 }
