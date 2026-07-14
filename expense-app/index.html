@@ -11,6 +11,10 @@
       <div class="app-header__inner">
         <h1 class="app-title">経費申請アプリ</h1>
         <div class="user-box">
+          <span class="sync-badge" id="syncBadge">ローカルのみ</span>
+          <button id="reSyncBtn" type="button" class="btn btn--ghost btn--sm" hidden>
+            再同期
+          </button>
           <label for="currentUser">ログインユーザー</label>
           <input
             id="currentUser"
@@ -20,6 +24,9 @@
           />
           <button id="adminToggle" type="button" class="btn btn--ghost">
             管理者モード
+          </button>
+          <button id="settingsBtn" type="button" class="btn btn--ghost" title="クラウド連携設定">
+            ⚙️
           </button>
         </div>
       </div>
@@ -40,7 +47,8 @@
             <h2 class="card__title">レシート画像から自動入力</h2>
             <p class="card__hint">
               レシートや領収書の写真をアップロードすると、画像を端末内で解析して
-              金額・日付・店名を自動で読み取ります（画像は外部に送信されません）。
+              金額・日付・店名を自動で読み取ります。クラウド連携が有効な場合、申請時に
+              画像は Google ドライブへ、内容はスプレッドシートへ保存されます。
             </p>
 
             <label class="dropzone" id="dropzone">
@@ -101,7 +109,7 @@
                 <textarea id="expDesc" rows="3" placeholder="例：取引先との打合せ"></textarea>
               </div>
               <div class="form__actions">
-                <button type="submit" class="btn btn--primary">申請する</button>
+                <button type="submit" class="btn btn--primary" id="submitBtn">申請する</button>
                 <button type="reset" class="btn btn--ghost">クリア</button>
               </div>
             </form>
@@ -131,6 +139,7 @@
                   <th>支払先</th>
                   <th class="num">金額</th>
                   <th>状態</th>
+                  <th>領収書</th>
                   <th>備考</th>
                   <th></th>
                 </tr>
@@ -161,6 +170,9 @@
                 <option value="approved">承認済み</option>
                 <option value="rejected">却下</option>
               </select>
+              <button id="csvBtn" type="button" class="btn btn--ghost btn--sm">
+                CSV書き出し
+              </button>
             </div>
           </div>
           <div class="table-wrap">
@@ -172,6 +184,7 @@
                   <th>科目</th>
                   <th>支払先</th>
                   <th class="num">金額</th>
+                  <th>領収書</th>
                   <th>状態</th>
                   <th>操作</th>
                 </tr>
@@ -183,9 +196,41 @@
       </section>
     </main>
 
+    <!-- ===== 設定モーダル ===== -->
+    <div class="modal" id="settingsModal" hidden>
+      <div class="modal__backdrop" data-close></div>
+      <div class="modal__box">
+        <h2 class="card__title">クラウド連携設定</h2>
+        <p class="card__hint">
+          Google Apps Script で公開した Web アプリの URL を設定すると、申請データが
+          スプレッドシートに、領収書画像が Google ドライブに保存され、複数端末・
+          分析ツールから同じデータを参照できます。未設定の場合はこの端末内
+          （localStorage）にのみ保存されます。設定手順は
+          <code>apps-script/README.md</code> を参照してください。
+        </p>
+        <div class="form__row">
+          <label for="cfgEndpoint">Web アプリ URL</label>
+          <input
+            id="cfgEndpoint"
+            type="url"
+            placeholder="https://script.google.com/macros/s/.../exec"
+          />
+        </div>
+        <div class="form__row">
+          <label for="cfgToken">共有トークン（任意）</label>
+          <input id="cfgToken" type="text" placeholder="GAS の SHARED_TOKEN と一致させる" />
+        </div>
+        <div class="form__actions">
+          <button id="cfgSave" type="button" class="btn btn--primary">保存して接続</button>
+          <button id="cfgClear" type="button" class="btn btn--ghost">連携を解除</button>
+          <button type="button" class="btn btn--ghost" data-close>閉じる</button>
+        </div>
+      </div>
+    </div>
+
     <div class="toast" id="toast" hidden></div>
 
-    <!-- レシート画像OCR（端末内で完結・外部送信なし） -->
+    <!-- レシート画像OCR（端末内で完結） -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="./script.js"></script>
   </body>

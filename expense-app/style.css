@@ -64,6 +64,27 @@ body {
   font-size: 0.85rem;
 }
 
+.sync-badge {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.sync-badge.is-synced {
+  color: var(--green);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+.sync-badge.is-syncing {
+  color: var(--accent);
+  border-color: rgba(251, 191, 36, 0.4);
+}
+.sync-badge.is-error {
+  color: var(--red);
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
 .tabs {
   max-width: 1100px;
   margin: 0 auto;
@@ -420,6 +441,45 @@ body {
 }
 .mini-select {
   width: auto;
+}
+
+/* ===== Modal ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal[hidden] {
+  display: none;
+}
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+.modal__box {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+}
+.modal__box code {
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+.receipt-link {
+  text-decoration: none;
+  font-size: 1rem;
 }
 
 /* ===== Toast ===== */
