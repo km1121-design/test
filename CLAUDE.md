@@ -1,125 +1,126 @@
 # CLAUDE.md
 
-Guidance for AI assistants (Claude Code) working in this repository.
+このリポジトリで作業する AI アシスタント（Claude Code）向けのガイドです。
 
-## What this repo is
+## このリポジトリについて
 
-`km1121-design/test` is a small **monorepo of internal browser tools** for a
-Japanese logistics business (Gooner運送事業部 / "Gooner delivery division").
-There is no single application — the repo bundles four independent tools that
-are built/copied together and published as one static **GitHub Pages** site.
+`km1121-design/test` は、日本の物流事業（Gooner運送事業部）向けの
+**社内ブラウザツールを集めたモノレポ** です。単一のアプリケーションではなく、
+4つの独立したツールをまとめてビルド／コピーし、1つの静的な
+**GitHub Pages** サイトとして公開します。
 
-All user-facing text, code comments, and documentation are in **Japanese**.
-Preserve this convention: write UI text, README content, and commit messages
-in Japanese unless the user asks otherwise.
+ユーザー向けの文言・コード内コメント・ドキュメントはすべて **日本語** です。
+この方針を維持してください。ユーザーから別の指示がない限り、UI 文言・README・
+コミットメッセージは日本語で記述します。
 
-## Repository layout
+## リポジトリ構成
 
-| Path | Tool | Stack | Build? |
+| パス | ツール | 技術スタック | ビルド |
 | --- | --- | --- | --- |
-| `dashboard/` | 経営分析ダッシュボード (management analytics + What-If simulator) | React 19 + TypeScript + Vite + Tailwind v4 + lucide-react | Yes (Vite) |
-| `invoice-tool/` | 請求書作成ツール (invoice creator, PDF via print) | Vanilla JS / HTML / CSS | No |
-| `expense-app/` | 経費申請アプリ (expense requests, receipt OCR) | Vanilla JS / HTML / CSS | No |
-| `apps-script/` | Backend for `expense-app` (Sheets DB + Drive image storage) | Google Apps Script (`Code.gs`) | No (deployed in Google) |
-| `pages-root/` | Landing page linking to the three web tools | Static HTML | No |
-| `docs/` | Requirements & spec documents (Japanese) | Markdown | — |
-| `.github/workflows/` | GitHub Pages deploy pipeline | GitHub Actions | — |
+| `dashboard/` | 経営分析ダッシュボード（What-If シミュレーター付き） | React 19 + TypeScript + Vite + Tailwind v4 + lucide-react | あり（Vite） |
+| `invoice-tool/` | 請求書作成ツール（印刷経由でPDF出力） | バニラ JS / HTML / CSS | なし |
+| `expense-app/` | 経費申請アプリ（レシートOCR） | バニラ JS / HTML / CSS | なし |
+| `apps-script/` | `expense-app` のバックエンド（スプレッドシートDB＋ドライブ画像保存） | Google Apps Script（`Code.gs`） | なし（Google 上でデプロイ） |
+| `pages-root/` | 3つのWebツールへのリンクを並べたランディングページ | 静的 HTML | なし |
+| `docs/` | 要件定義・仕様ドキュメント（日本語） | Markdown | — |
+| `.github/workflows/` | GitHub Pages デプロイパイプライン | GitHub Actions | — |
 
-The three vanilla tools (`invoice-tool/`, `expense-app/`, `pages-root/`) run by
-opening `index.html` directly — no build step, no server. Keep them that way.
+バニラの3ツール（`invoice-tool/` / `expense-app/` / `pages-root/`）は
+`index.html` を直接開くだけで動作します。ビルドもサーバーも不要です。
+この状態を保ってください。
 
-## Build, run, and lint
+## ビルド・実行・Lint
 
-Only `dashboard/` has a toolchain. From `dashboard/`:
+ツールチェーンを持つのは `dashboard/` のみです。`dashboard/` 内で実行します。
 
 ```bash
 npm install
-npm run dev      # dev server
+npm run dev      # 開発サーバー
 npm run build    # tsc -b && vite build → dist/
-npm run preview  # preview the production build
+npm run preview  # 本番ビルドのプレビュー
 npm run lint     # oxlint
 ```
 
-- Node 20 (matches CI). `npm ci` is used in CI, so keep `package-lock.json` committed.
-- Vite is configured with `base: './'` — the build must work from any Pages
-  subpath. Do not hardcode absolute asset paths.
-- Lint is **oxlint** (see `dashboard/.oxlintrc.json`), not ESLint. Rules of
-  Hooks is an error; `react/only-export-components` is a warning.
-- The vanilla tools have no lint/build/test commands. Verify them by opening
-  the HTML in a browser.
+- Node 20（CI と同じ）。CI では `npm ci` を使うため、`package-lock.json` は
+  必ずコミットしておきます。
+- Vite は `base: './'` で設定されています。ビルド結果は任意の Pages サブパスから
+  動作する必要があるため、アセットの絶対パスをハードコードしないでください。
+- Lint は ESLint ではなく **oxlint**（`dashboard/.oxlintrc.json` を参照）。
+  Rules of Hooks は error、`react/only-export-components` は warning です。
+- バニラツールには lint／build／test コマンドがありません。HTML をブラウザで
+  開いて動作確認します。
+- 現時点でどのツールにも **自動テストはありません**。
 
-There are currently **no automated tests** in any tool.
+## デプロイ（重要）
 
-## Deployment (important)
+`.github/workflows/deploy-pages.yml` は、**`main` への push**（または手動の
+`workflow_dispatch`）で GitHub Pages に公開します。ただし `invoice-tool/`・
+`expense-app/`・`dashboard/`・`pages-root/`・ワークフロー自身のいずれかが
+変更された場合のみ発火します。
 
-`.github/workflows/deploy-pages.yml` publishes to GitHub Pages on **push to
-`main`** (or manual `workflow_dispatch`), only when files under
-`invoice-tool/`, `expense-app/`, `dashboard/`, `pages-root/`, or the workflow
-itself change.
+ジョブは `_site/` を次のように組み立てます。
 
-The job assembles `_site/` like this:
-
-- `pages-root/` → site root (the landing page)
+- `pages-root/` → サイトルート（ランディングページ）
 - `invoice-tool/` → `/invoice-tool/`
 - `expense-app/` → `/expense-app/`
-- `dashboard/dist/` (built) → `/dashboard/`
+- `dashboard/dist/`（ビルド済み）→ `/dashboard/`
 
-So a tool's public URL mirrors its directory name. When you add a new tool,
-update **both** the workflow's `paths:` filter and the `Assemble Pages site`
-step, and add a card to `pages-root/index.html`.
+つまり各ツールの公開URLはディレクトリ名に対応します。新しいツールを追加する
+ときは、ワークフローの `paths:` フィルターと `Assemble Pages site` ステップの
+**両方** を更新し、`pages-root/index.html` にカードを追加してください。
 
-## Key conventions
+## 主な規約
 
-### Runs in constrained/iframe environments
-Tools are designed to work offline and inside sandboxed iframes:
-- **Do not use `alert()` / `confirm()` / `prompt()`.** The dashboard ships a
-  custom toast UI (`dashboard/src/components/ToastProvider.tsx` +
-  `useToast`); follow that pattern instead.
-- Dependencies that must work offline (e.g. `lucide-react` icons) are bundled,
-  not loaded from a CDN. Exception: `expense-app` loads Tesseract.js OCR and
-  its language data from a CDN at analysis time (network needed only then).
+### 制約された／iframe 環境で動作する
+ツールはオフラインおよびサンドボックス化された iframe 内で動くよう設計されています。
+- **`alert()` / `confirm()` / `prompt()` は使用しない。** ダッシュボードには独自の
+  トーストUI（`dashboard/src/components/ToastProvider.tsx` ＋ `useToast`）が
+  あります。同じパターンに従ってください。
+- オフラインで動作させる必要がある依存（例: `lucide-react` アイコン）は CDN では
+  なくバンドルします。例外として `expense-app` は解析時に Tesseract.js（OCR）と
+  言語データを CDN から取得します（この時のみネット接続が必要）。
 
-### Dashboard architecture (`dashboard/src/`)
-- `data/` — mock master data (drivers, vehicle expenses, enterprise projects,
-  field-bug log) and **all tunable constants in `data/constants.ts`**. Business
-  calculation defaults live there; change numbers there, not inline.
-- `hooks/useSimulator.ts` — the What-If calculation engine. Pure
-  `computeSimulation()` wrapped in `useMemo`; input ranges in
-  `SIMULATOR_RANGES`, defaults in `DEFAULT_SIMULATOR_INPUTS`.
-- `types.ts` — shared domain types (all commented in Japanese).
-- `components/ui/` — reusable primitives (Card, Badge, Slider, StatTile,
-  ProgressBar). `components/tabs/` — the four analytics views.
-- Styling is Tailwind v4 utility classes with CSS variables (e.g.
-  `bg-[var(--page)]`); no separate CSS modules.
+### ダッシュボードのアーキテクチャ（`dashboard/src/`）
+- `data/` — モックのマスターデータ（ドライバー・車両経費・企業配案件・現場バグ
+  ログ）と、**調整可能な定数はすべて `data/constants.ts` に集約**。経営計算の
+  規定値はここにあります。数値はインラインではなくここで変更します。
+- `hooks/useSimulator.ts` — What-If 計算エンジン。純粋関数 `computeSimulation()`
+  を `useMemo` でラップ。入力レンジは `SIMULATOR_RANGES`、既定値は
+  `DEFAULT_SIMULATOR_INPUTS`。
+- `types.ts` — 共有ドメイン型（コメントはすべて日本語）。
+- `components/ui/` — 再利用可能なプリミティブ（Card・Badge・Slider・StatTile・
+  ProgressBar）。`components/tabs/` — 4つの分析ビュー。
+- スタイリングは CSS 変数を併用した Tailwind v4 のユーティリティクラス
+  （例: `bg-[var(--page)]`）。別途 CSS モジュールは使いません。
 
-### Vanilla tools (`invoice-tool/`, `expense-app/`)
-- Single `script.js` in `'use strict'`, no framework, no bundler.
-- State persists to `localStorage` under namespaced keys
-  (`invoiceTool.draft.v1`, `expense-app:*`).
-- `expense-app` uses JSDoc `@typedef` for its data shapes — keep types in sync
-  when editing.
+### バニラツール（`invoice-tool/` / `expense-app/`）
+- `'use strict'` の単一 `script.js`。フレームワーク・バンドラーなし。
+- 状態は名前空間付きのキーで `localStorage` に永続化
+  （`invoiceTool.draft.v1`・`expense-app:*`）。
+- `expense-app` はデータ構造に JSDoc の `@typedef` を使用。編集時は型を
+  同期させてください。
 
-### expense-app ↔ Apps Script contract
-`expense-app/script.js` talks to the Apps Script Web App (`apps-script/Code.gs`):
-- Spreadsheet (`expenses` sheet) is the source of truth; localStorage is a
-  read cache + offline resend queue.
-- API: `GET ?token=` returns all records; `POST` (text/plain JSON) with
-  `action: "create" | "update" | "delete"`.
-- The record/column schema is documented in `apps-script/README.md` — if you
-  change fields, update the Sheet columns, the `Code.gs` handler, and the
-  client together.
+### expense-app ↔ Apps Script の契約
+`expense-app/script.js` は Apps Script Web アプリ（`apps-script/Code.gs`）と
+通信します。
+- スプレッドシート（`expenses` シート）が正本。localStorage は読み取りキャッシュ
+  ＋オフライン時の再送信キューです。
+- API: `GET ?token=` で全レコード取得、`POST`（text/plain の JSON）で
+  `action: "create" | "update" | "delete"`。
+- レコード／列のスキーマは `apps-script/README.md` に記載。フィールドを変更する
+  ときは、シートの列・`Code.gs` のハンドラ・クライアントを一括で更新してください。
 
-## Git workflow
+## Git 運用
 
-- Default branch: `main`. Feature work happens on `claude/...` branches and
-  merges to `main` via PR; merging to `main` triggers the Pages deploy.
-- Push with `git push -u origin <branch>`.
-- **Do not open a pull request unless the user explicitly asks.**
-- Commit messages in this repo are written in Japanese, matching history.
+- 既定ブランチ: `main`。機能開発は `claude/...` ブランチで行い、PR 経由で `main`
+  にマージします。`main` へのマージで Pages デプロイが走ります。
+- push は `git push -u origin <branch>`。
+- **ユーザーが明示的に依頼した場合のみ** プルリクエストを作成します。
+- コミットメッセージは履歴に合わせて日本語で書きます。
 
-## Where to look first
+## まず参照すべき場所
 
-- Overview & per-tool feature lists: root `README.md`.
-- Dashboard requirements / business logic: `docs/gooner-dashboard-requirements.md`.
-- Expense app spec: `docs/expense-app-spec.md`.
-- Backend setup & data schema: `apps-script/README.md`.
+- 全体像・ツールごとの機能一覧: ルートの `README.md`。
+- ダッシュボードの要件・経営ロジック: `docs/gooner-dashboard-requirements.md`。
+- 経費申請アプリの仕様: `docs/expense-app-spec.md`。
+- バックエンドのセットアップ・データスキーマ: `apps-script/README.md`。
