@@ -1,0 +1,7 @@
+node_modules
+dist
+*.log
+data/*.sqlite3
+data/*.sqlite3-*
+.dev.vars
+.wrangler

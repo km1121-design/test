@@ -1,6 +1,68 @@
 # test
 テスト環境
 
+## BAR 日報・経営分析アプリ（現行・本命）
+
+日報の入力・分析はアプリで行い、LINEへは配信のみ行う「アプリ入力・LINE配信型」。
+確定した要件定義は `docs/bar-app-requirements.md`（v1.2・壁打ち論点A〜Rの決定事項
+ログ付き）を参照。**`bar-app/` に Phase 1〜3 を実装済み**（日報入力＋経営分析＋認証＋
+CSV出力／LINE配信①②⑤＋配信設定＋領収書写真の共有ドライブ保存／③未提出リマインド・
+④異常アラート・着地予測・推移グラフ・スタッフ管理UI）。
+
+```bash
+# サーバー（Hono + SQLite／本番はCloudflare Workers + D1）
+cd bar-app/server && npm install && npm run seed && npm run dev
+# フロント（Vite + React／本番はCloudflare Pages・LIFF化想定）
+cd bar-app/web && npm install && npm run dev
+```
+
+セットアップ・Cloudflareデプロイ手順は `bar-app/README.md` を参照。決済手数料の
+自動計算、BAR全体売上と代表個人売上の分離、スタッフ別内訳、CSVエクスポート、
+LINE配信（日報転送・日次サマリー・スタッフ日報まとめ）、領収書写真の共有ドライブ保存に
+対応。さらに未提出リマインド・異常アラート・着地予測・推移グラフ・スタッフ管理UI・
+LINEログイン（LIFF）まで実装済み。LINE/Google認証情報が無い環境ではモックモードで
+動作検証でき、認証情報を設定すれば本番連携に切り替わる。残るは外部アカウントの設定・
+デプロイ作業のみ（手順は `bar-app/DEPLOYMENT.md`）。
+
+以下の `bar-dashboard/`・`line-bot/` は方針転換前の実装で、`bar-app/` の移植元
+（部品）です。
+
+## BAR 業務日報・売上管理システム
+
+`bar-dashboard/` に、BAR事業（1部・2部）の日報（売上・経費・勤怠）入力から、
+インセンティブ計算・利益の見える化までを行うダッシュボード（React + TypeScript +
+Vite + Tailwind CSS）があります。要件定義書は `docs/bar-dashboard-requirements.md`
+を参照してください。
+
+```bash
+cd bar-dashboard
+npm install
+npm run dev
+```
+
+`bar-dashboard/` 単体は日報入力フォームでの送信を模したフロントエンド完結の実装
+（データは `localStorage` に保存）です。実際にLINEで日報をやり取いするバック
+エンドは `line-bot/` に実装しています（下記）。
+
+## BAR業務日報 LINE Bot
+
+`line-bot/` に、LINEで送信された日報を受け取り、SQLiteへの保存・★自動計算
+（インセンティブ・当月累計・利益など）・「報告用」テキストの生成/返信/グループ
+転送までを行うNode.js（Express + TypeScript）製のBotサーバーがあります。
+セットアップ・LINE Developersでのチャネル作成手順・メッセージフォーマットは
+`line-bot/README.md` を参照してください。
+
+```bash
+cd line-bot
+npm install
+cp .env.example .env   # LINE_CHANNEL_ACCESS_TOKEN / LINE_CHANNEL_SECRET を設定
+npm run seed
+npm run dev
+```
+
+LINEチャネルを用意する前でも `npm run cli` でパーサー・計算ロジックをローカル
+確認できます。
+
 ## Gooner運送事業部 経営分析ダッシュボード
 
 `dashboard/` に、Gooner運送事業部の黒字化を支援する経営分析・What-Ifシミュレーション
