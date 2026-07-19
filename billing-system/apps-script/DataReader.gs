@@ -214,6 +214,79 @@ function writeInventoryToOutput() {
 }
 
 /* ============================================================
+ * 5b. M4 コース対応マスタ生成（Step 2）
+ * ============================================================ */
+
+/**
+ * 正規化コース単位で M4 コース対応マスタのドラフトを生成する。
+ * 単価は「エリア区分」で決定（確認事項1の推奨案＝取引先列は請求先識別にのみ使用）。
+ *   - 単一エリア        → 「確定候補」
+ *   - 複数エリア混在    → 「要確認(複数エリア:主XX)」（主エリアの単価を暫定採用）
+ *   - 区分不明/判定不能 → 「要確認」（単価は空欄でユーザー確認待ち）
+ * @return {Array<Object>}
+ */
+function buildM4Master() {
+  var recs = readJissekiRecords_();
+  var agg = {}; // norm -> {count, raws{}, tori{}, kanryo, neko}
+  recs.forEach(function (r) {
+    if (r.course === '') return;
+    var n = normalizeCourse_(r.course);
+    if (!agg[n]) agg[n] = { count: 0, raws: {}, tori: {}, kanryo: 0, neko: 0 };
+    var a = agg[n];
+    a.count++;
+    a.raws[r.course] = (a.raws[r.course] || 0) + 1;
+    a.tori[r.torihiki] = (a.tori[r.torihiki] || 0) + 1;
+    a.kanryo += r.kanryo;
+    a.neko += r.nekopos;
+  });
+
+  var master = [];
+  Object.keys(agg).forEach(function (n) {
+    var a = agg[n];
+    var hits = classifyArea_(n);
+    var unknown = detectUnknown_(n);
+    var area = '', tori = '', rate = '', neko = '', status = '';
+    if (hits.length === 1) {
+      area = hits[0]; tori = HAITATSU_RATES[area].torihiki; rate = HAITATSU_RATES[area].kanryo; neko = 50; status = '確定候補';
+    } else if (hits.length > 1) {
+      area = hits.join('|'); tori = HAITATSU_RATES[hits[0]].torihiki; rate = HAITATSU_RATES[hits[0]].kanryo; neko = 50;
+      status = '要確認(複数エリア:主' + hits[0] + ')';
+    } else if (unknown.length) {
+      status = '要確認(区分不明:' + unknown.join(',') + ')';
+    } else {
+      status = '要確認';
+    }
+    var raws = Object.keys(a.raws).map(function (k) { return k + '×' + a.raws[k]; }).join('|');
+    var toris = Object.keys(a.tori).map(function (k) { return k + ':' + a.tori[k]; }).join('|');
+    master.push({
+      norm: n, raws: raws, count: a.count, kanryoSum: a.kanryo, nekoSum: a.neko,
+      area: area, torihiki: tori, kanryoRate: rate, nekoRate: neko, status: status, toriBreakdown: toris
+    });
+  });
+  master.sort(function (x, y) { return y.count - x.count; });
+  return master;
+}
+
+/** M4 マスタを出力スプレッドシートの「M4_コース対応マスタ」タブへ書き出す。 */
+function writeM4ToOutput() {
+  var m = buildM4Master();
+  var ss = outputSpreadsheet_();
+  var name = 'M4_コース対応マスタ';
+  var sh = ss.getSheetByName(name);
+  if (sh) sh.clear(); else sh = ss.insertSheet(name);
+  var header = ['正規化コース名', '原文表記ゆれ(×件数)', '出現行数', '宅配完了計', 'ネコポス計',
+    'エリア区分', '取引先(推定)', '完了単価', 'ネコポス単価', 'ステータス', '実績取引先内訳(参考)'];
+  var rows = m.map(function (r) {
+    return [r.norm, r.raws, r.count, r.kanryoSum, r.nekoSum, r.area, r.torihiki, r.kanryoRate, r.nekoRate, r.status, r.toriBreakdown];
+  });
+  sh.getRange(1, 1, 1, header.length).setValues([header]).setFontWeight('bold');
+  if (rows.length) sh.getRange(2, 1, rows.length, header.length).setValues(rows);
+  sh.setFrozenRows(1);
+  Logger.log('M4マスタを書き出しました: %s 行 / %s', rows.length, ss.getUrl());
+  return ss.getUrl();
+}
+
+/* ============================================================
  * 6. Step 1 一括実行
  * ============================================================ */
 
