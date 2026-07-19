@@ -6,11 +6,11 @@
  * 【売上（顧客請求）】
  *   宅配   = Σ(宅配完了数 × エリア単価) ＋ Σ(ネコポス × ¥50)   … 個数制（付録B）
  *   企業配 = Σ(案件の基本単価 × 回数)                           … 回数制（付録A）
- *   税: 税抜小計 → 消費税10%（ROUNDDOWN・旧GAS踏襲）→ 税込合計
+ *   税: 税抜小計 → 消費税10%（四捨五入・2026/07ユーザー確定）→ 税込合計
  *   請求先: 実績の「取引先」列で1取引先=1枚に集約（F-103）
  *
- * 【原価（ドライバー支払）】
- *   宅配   = Σ(宅配完了数 × ドライバー卸単価) ＋ Σ(ネコポス × ¥50 ※暫定)
+ * 【原価（ドライバー支払）】※卸単価は税込契約（2026/07ユーザー確定・消費税加算なし）
+ *   宅配   = Σ(宅配完了数 × ドライバー卸単価) ＋ Σ(ネコポス × ¥50 ※確定)
  *   企業配 = Σ(区分別卸単価 × 回数)（付録A）
  *   ＋ 当月立替経費 全額（F-202）
  *
@@ -27,9 +27,9 @@
 
 var TAX_RATE = 0.10;
 
-/** 消費税（ROUNDDOWN・旧GAS実装踏襲）。 */
+/** 消費税（四捨五入・2026/07ユーザー確定。旧GASの切捨てから変更）。 */
 function calcTax_(subtotal) {
-  return Math.floor(subtotal * TAX_RATE);
+  return Math.round(subtotal * TAX_RATE);
 }
 
 /* ============================================================
@@ -207,7 +207,7 @@ function readApprovedExpenses_(yyyymm) {
 
 /**
  * 対象月のドライバー支払（宅配分＋経費）を集計。
- * ネコポスの卸単価は暫定 ¥50（要ユーザー確認）。企業配分は kigyohaiPayRecs で追加可能。
+ * ネコポス卸単価は ¥50（2026/07確定）。卸単価は税込契約のため消費税は加算しない（同確定）。
  * @param {string} yyyymm
  * @param {Array=} confirmedRecs 照合済み確定実績（省略時は全実績）
  */
@@ -227,15 +227,14 @@ function computeDriverPay(yyyymm, confirmedRecs) {
     var d = byDriver[full];
     d.kanryo += r.kanryo;
     d.neko += r.nekopos;
-    d.workAmt += r.kanryo * rm.rate + r.nekopos * 50; // ネコポス卸¥50は暫定
+    d.workAmt += r.kanryo * rm.rate + r.nekopos * 50; // ネコポス卸¥50（確定）
   });
   Object.keys(byDriver).forEach(function (full) {
     var e = expenses[full];
     if (e) { byDriver[full].expense = e.total; byDriver[full].expenseItems = e.items; }
     var d = byDriver[full];
     d.subtotal = d.workAmt;
-    d.tax = calcTax_(d.subtotal);
-    d.total = d.subtotal + d.tax + d.expense; // 経費は非課税の立替精算として税外加算
+    d.total = d.subtotal + d.expense; // 卸単価は税込契約＝消費税加算なし。経費は全額精算
   });
   return { drivers: byDriver, noRate: Object.keys(noRate) };
 }
@@ -278,7 +277,7 @@ function generateCustomerInvoices(yyyymm) {
     rows.push(['ネコポス', s.neko, 50, s.nekoAmt, '全エリア一律']);
     rows.push(['', '', '', '', '']);
     rows.push(['', '', '小計(税抜)', s.subtotal, '']);
-    rows.push(['', '', '消費税(10%)', s.tax, '端数切捨て']);
+    rows.push(['', '', '消費税(10%)', s.tax, '端数四捨五入']);
     rows.push(['', '', '税込合計', s.total, '']);
     sh.getRange(1, 1, rows.length, 5).setValues(rows);
     sh.getRange(7, 1, 1, 5).setFontWeight('bold');
@@ -307,11 +306,10 @@ function generateDriverStatements(yyyymm) {
     rows.push(['支 払 明 細 書', '', '', '', '']);
     rows.push([full + ' 様', '', '対象月', yyyymm, '']);
     rows.push(['', '', '', '', '']);
-    rows.push(['品目', '数量', '単価(税抜)', '金額(税抜)', '備考']);
-    rows.push(['宅配完了', d.kanryo, d.rate, d.kanryo * d.rate, 'ドライバー卸単価']);
-    rows.push(['ネコポス', d.neko, 50, d.neko * 50, '暫定単価']);
-    rows.push(['', '', '小計(税抜)', d.subtotal, '']);
-    rows.push(['', '', '消費税(10%)', d.tax, '端数切捨て']);
+    rows.push(['品目', '数量', '単価(税込)', '金額(税込)', '備考']);
+    rows.push(['宅配完了', d.kanryo, d.rate, d.kanryo * d.rate, 'ドライバー卸単価（税込契約）']);
+    rows.push(['ネコポス', d.neko, 50, d.neko * 50, '']);
+    rows.push(['', '', '小計(税込)', d.subtotal, '消費税加算なし']);
     rows.push(['', '', '', '', '']);
     rows.push(['立替経費（全額精算）', '', '', d.expense, d.expenseItems.length + '件']);
     d.expenseItems.forEach(function (e) {
