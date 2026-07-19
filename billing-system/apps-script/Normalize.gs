@@ -44,16 +44,30 @@ function classifyArea_(normCourse) {
   var hits = [];
   if (s.indexOf('上高') >= 0) hits.push('上高');
   if (s.indexOf('中央') >= 0 || s.indexOf('本町') >= 0 || s.indexOf('中野') >= 0) hits.push('中野');
-  if (s.indexOf('青山') >= 0 || s.indexOf('芝浦') >= 0 || s.indexOf('新橋') >= 0) hits.push('青山系');
+  // 青山系（k-dash）: 青山・芝浦・西新橋に加え、ユーザー確認済み（2026/07）で
+  //   ・マンション名 キャピタル/プラウド/ツイン → k-dash
+  //   ・略記 北1.2 / 北12 / 北3 / 南2.南1（北青山・南青山の略）→ 青山系
+  if (/青山|芝浦|新橋/.test(s) || /[北南]\d/.test(s) || /キャピタル|プラウド|ツイン/.test(s)) hits.push('青山系');
   if (s.indexOf('上馬') >= 0 || s.indexOf('池尻') >= 0) hits.push('上馬池尻');
   return hits;
 }
 
 /**
+ * コース空白行（仲山さん等）の宅配単価は【取引先】で決定する（ユーザー確認済み 2026/07）。
+ * フェイト → 上高相当 ¥167、k-dash → 青山系相当 ¥163。ネコポスは一律 ¥50。
+ */
+var BLANK_COURSE_RATE_BY_TORIHIKI = {
+  'フェイト': { kanryo: 167, nekopos: 50 },
+  'k-dash':   { kanryo: 163, nekopos: 50 }
+};
+
+/**
  * 区分不明（マンション名等でエリア判定できない）キーワードを検出。
  * 「キャピタル」「プラウド」「ツイン」「中野坂上」等はユーザー確認待ち（要件定義書 Q1）。
  */
-var UNKNOWN_KEYWORDS = ['キャピタル', 'プラウド', 'ツイン', '中野坂上'];
+// キャピタル/プラウド/ツインは 2026/07 に k-dash（青山系）と確定したため除外。
+// 中野坂上のみ区分未確定として残す（「中野」に部分一致するため実害は小）。
+var UNKNOWN_KEYWORDS = ['中野坂上'];
 function detectUnknown_(normCourse) {
   var found = [];
   for (var i = 0; i < UNKNOWN_KEYWORDS.length; i++) {

@@ -18,8 +18,8 @@
 | Step | 内容 | 状態 |
 |---|---|---|
 | **Step 1** | データ読み込み基盤（全タブ列挙・コース名ユニーク抽出） | ✅ 完了（`docs/step1-findings.md`） |
-| **Step 2** | M4 コース対応マスタ生成 | 🟡 ドラフト完了（`docs/step2-m4-master.md`、要確認10件＋仲山空白行のみ残） |
-| Step 3 | 実績照合（シフト予定 vs 実稼働） | 未着手 |
+| **Step 2** | M4 コース対応マスタ生成 | ✅ 確定（`docs/step2-m4-master.md`、49コース中46確定／複数エリア3件のみ残） |
+| **Step 3** | 実績照合（シフト予定 vs 実稼働） | ✅ エンジン実装（`docs/step3-reconciliation.md`、GAS実行＝Step5で検算） |
 | Step 4 | 請求・支払計算（宅配/企業配） | 未着手 |
 | Step 5 | 検算（2〜3月の1ヶ月試算） | 未着手 |
 
@@ -29,13 +29,15 @@
 billing-system/
 ├── apps-script/
 │   ├── DataReader.gs   … タブ列挙・実績読み込み・コースインベントリ/M4生成・出力
-│   └── Normalize.gs    … コース名正規化・エリア区分判定・単価マスタ定数（付録B）
+│   ├── Normalize.gs    … コース名正規化・エリア区分判定・単価マスタ定数（付録B）
+│   └── Reconcile.gs    … M5名寄せ・シフト解析・実績照合(P1〜P4)・照合レポート出力
 ├── data/
 │   ├── course-inventory.csv  … 抽出した全コース53種＋正規化＋区分＋要確認フラグ
-│   └── m4-course-master.csv  … M4コース対応マスタ（正規化49種・確定候補39/要確認10）
+│   └── m4-course-master.csv  … M4コース対応マスタ（正規化49種・確定46/要確認3）
 └── docs/
-    ├── step1-findings.md     … Step 1 実施結果と残論点
-    └── step2-m4-master.md    … Step 2 M4マスタ・ドラフト
+    ├── step1-findings.md       … Step 1 実施結果と残論点
+    ├── step2-m4-master.md      … Step 2 M4マスタ（確定版）
+    └── step3-reconciliation.md … Step 3 実績照合エンジン
 ```
 
 ## GAS のセットアップ
