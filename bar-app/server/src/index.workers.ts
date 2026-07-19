@@ -14,6 +14,7 @@ interface WorkerEnv {
   CRON_SECRET?: string
   GOOGLE_SERVICE_ACCOUNT_KEY?: string
   GDRIVE_ROOT_FOLDER_ID?: string
+  LIFF_CHANNEL_ID?: string
 }
 
 function configOf(env: WorkerEnv): AppConfig {
@@ -22,6 +23,7 @@ function configOf(env: WorkerEnv): AppConfig {
     cronSecret: env.CRON_SECRET,
     googleServiceAccountJson: env.GOOGLE_SERVICE_ACCOUNT_KEY,
     gdriveRootFolderId: env.GDRIVE_ROOT_FOLDER_ID,
+    liffChannelId: env.LIFF_CHANNEL_ID,
   }
 }
 

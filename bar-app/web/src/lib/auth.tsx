@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 import type { SessionUser } from './types.ts'
 import { loadUser, saveUser } from './api.ts'
+import { liffLogout } from './liff.ts'
 
 interface AuthValue {
   user: SessionUser | null
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     saveUser(null)
     setUser(null)
+    liffLogout()
   }, [])
 
   return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>

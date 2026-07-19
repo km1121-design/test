@@ -92,6 +92,20 @@ export async function findStaffById(db: Db, id: string): Promise<StaffMember | u
   return row ? mapStaff(row) : undefined
 }
 
+export async function findStaffByLineUserId(db: Db, lineUserId: string): Promise<StaffMember | undefined> {
+  const row = await db.get<StaffRow>('SELECT * FROM staff WHERE line_user_id = ? AND active = 1', [lineUserId])
+  return row ? mapStaff(row) : undefined
+}
+
+/** LIFF初回ログイン時の紐付け: 未紐付けのスタッフにのみ lineUserId を保存する */
+export async function bindStaffLineUserId(db: Db, staffId: string, lineUserId: string): Promise<StaffMember | undefined> {
+  const staff = await findStaffById(db, staffId)
+  if (!staff || !staff.active) return undefined
+  if (staff.lineUserId && staff.lineUserId !== lineUserId) return undefined // 既に別IDに紐付け済み
+  await db.run('UPDATE staff SET line_user_id = ? WHERE id = ?', [lineUserId, staffId])
+  return { ...staff, lineUserId }
+}
+
 export async function upsertStaff(db: Db, s: StaffMember): Promise<void> {
   await db.run(
     `INSERT INTO staff (id, name, role, department, hourly_wage_override, monthly_goal, line_user_id, active)

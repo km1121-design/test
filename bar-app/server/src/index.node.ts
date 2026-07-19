@@ -9,6 +9,7 @@ const config: AppConfig = {
   cronSecret: process.env.CRON_SECRET || undefined,
   googleServiceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_KEY || undefined,
   gdriveRootFolderId: process.env.GDRIVE_ROOT_FOLDER_ID || undefined,
+  liffChannelId: process.env.LIFF_CHANNEL_ID || undefined,
 }
 
 const app = createApp(() => getDb(), () => config)

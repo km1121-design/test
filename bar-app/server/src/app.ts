@@ -20,6 +20,8 @@ export interface AppConfig {
   googleServiceAccountJson?: string
   /** 共有ドライブの保存先ルートフォルダID */
   gdriveRootFolderId?: string
+  /** LINEログイン（LIFF）チャネルのチャネルID。未設定ならLIFFログインは無効（モックログインのみ） */
+  liffChannelId?: string
 }
 
 export interface Env {
